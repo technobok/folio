@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}History: {{ document.title }} - Folio{% endblock %}
+
+{% block content %}
+<div class="history-page">
+    <header>
+        <hgroup>
+            <h2>History: {{ document.title }}</h2>
+            <p><a href="{{ url_for('documents.view', slug=document.slug) }}">Back to document</a></p>
+        </hgroup>
+    </header>
+
+    {% if versions | length > 1 %}
+    <form method="get" action="{{ url_for('documents.diff', slug=document.slug) }}" class="diff-form">
+        <fieldset>
+            <legend>Compare versions</legend>
+            <div class="grid">
+                <label>
+                    From:
+                    <select name="from">
+                        {% for v in versions %}
+                        <option value="{{ v.version_number }}" {% if loop.index == 2 %}selected{% endif %}>
+                            v{{ v.version_number }} - {{ v.created_at | localdatetime }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>
+                    To:
+                    <select name="to">
+                        {% for v in versions %}
+                        <option value="{{ v.version_number }}" {% if loop.first %}selected{% endif %}>
+                            v{{ v.version_number }} - {{ v.created_at | localdatetime }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+            <button type="submit" class="outline">Compare</button>
+        </fieldset>
+    </form>
+    {% endif %}
+
+    {% if versions %}
+    <div class="version-timeline">
+        {% for v in versions %}
+        <div class="version-item">
+            <div class="version-header">
+                <strong>
+                    <a href="{{ url_for('documents.view_version', slug=document.slug, version_number=v.version_number) }}">
+                        Version {{ v.version_number }}
+                    </a>
+                </strong>
+                <span class="version-meta">
+                    by {{ v.author }} &middot; {{ v.created_at | localdatetime }}
+                </span>
+            </div>
+            {% if v.message %}
+            <div class="version-message">{{ v.message }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="no-activity">No versions recorded yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

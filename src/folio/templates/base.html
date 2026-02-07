@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Folio{% endblock %}</title>
+
+    <!-- Vendor CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/pico.min.css') }}">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header class="container">
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('index') }}" class="brand"><strong>Folio</strong></a></li>
+            </ul>
+            <ul>
+                {% if g.user %}
+                <li><a href="{{ url_for('documents.index') }}">Documents</a></li>
+                <li><a href="{{ url_for('documents.search') }}">Search</a></li>
+                {% endif %}
+                {% if g.user %}
+                <li>{{ g.user.fullname or g.user.username }}</li>
+                <li><button type="button" class="outline secondary" onclick="location.href='{{ url_for('auth.logout') }}'">Logout</button></li>
+                {% else %}
+                <li><a href="{{ url_for('auth.login') }}" role="button" class="outline">Login</a></li>
+                {% endif %}
+                <li>
+                    <label class="theme-toggle" aria-label="Toggle theme">
+                        <input id="mode-checkbox" class="mode-checkbox" type="checkbox" />
+                        <div class="mode-slot">
+                            <div class="sun-icon-wrapper">
+                                <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="5"></circle>
+                                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                </svg>
+                            </div>
+                            <div class="mode-button"></div>
+                            <div class="moon-icon-wrapper">
+                                <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </label>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div id="flash-messages">
+            {% for category, message in messages %}
+            <article class="flash flash-{{ category }}">
+                {{ message }}
+            </article>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container">
+        <small>Folio - Document Management</small>
+    </footer>
+
+    <!-- Vendor JS -->
+    <script src="{{ url_for('static', filename='vendor/htmx.min.js') }}"></script>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

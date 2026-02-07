@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}v{{ version.version_number }}: {{ document.title }} - Folio{% endblock %}
+
+{% block content %}
+<header>
+    <hgroup>
+        <h2>{{ document.title }} <small>(version {{ version.version_number }})</small></h2>
+        <p>
+            By {{ version.author }} &middot; {{ version.created_at | localdatetime }}
+            {% if version.message %}&middot; {{ version.message }}{% endif %}
+        </p>
+    </hgroup>
+</header>
+
+<div class="doc-toolbar">
+    <a href="{{ url_for('documents.view', slug=document.slug) }}" role="button" class="outline">Current version</a>
+    <a href="{{ url_for('documents.history', slug=document.slug) }}" role="button" class="outline secondary">History</a>
+</div>
+
+<article class="document-content">
+    <div class="markdown-content">
+        {{ version.content | markdown_block }}
+    </div>
+</article>
+{% endblock %}

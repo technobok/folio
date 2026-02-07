@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}New Document - Folio{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor/dist/index.css" />
+{% endblock %}
+
+{% block content %}
+<h2>New Document</h2>
+
+<form method="post" id="document-form">
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" placeholder="Document title" required autofocus>
+
+    <details>
+        <summary>Slug (optional)</summary>
+        <label for="slug">Custom slug</label>
+        <input type="text" id="slug" name="slug" placeholder="auto-generated-from-title">
+        {% if parent_path %}
+        <small>Will be created under: {{ parent_path }}/</small>
+        {% endif %}
+    </details>
+
+    <input type="hidden" name="content" id="content-field" value="">
+    <label>Content</label>
+    <div id="vditor"></div>
+
+    <div class="form-actions">
+        <button type="submit">Create Document</button>
+        <a href="{{ url_for('documents.index') }}" role="button" class="outline secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/vditor/dist/index.min.js"></script>
+<script>
+const vditor = new Vditor('vditor', {
+    height: 400,
+    mode: 'wysiwyg',
+    lang: 'en_US',
+    placeholder: 'Start writing...',
+    theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'classic',
+    cache: { enable: false },
+    toolbar: [
+        'headings', 'bold', 'italic', 'strike', '|',
+        'list', 'ordered-list', 'check', '|',
+        'quote', 'code', 'inline-code', '|',
+        'link', 'upload', 'table', '|',
+        'undo', 'redo', '|',
+        'outline', 'fullscreen',
+    ],
+    after: function() {
+        // Sync theme
+        var modeCheckbox = document.getElementById('mode-checkbox');
+        if (modeCheckbox) {
+            modeCheckbox.addEventListener('change', function() {
+                vditor.setTheme(this.checked ? 'dark' : 'classic');
+            });
+        }
+    },
+});
+
+document.getElementById('document-form').addEventListener('submit', function() {
+    document.getElementById('content-field').value = vditor.getValue();
+});
+</script>
+{% endblock %}

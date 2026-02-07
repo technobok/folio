@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Diff v{{ from_version }}..v{{ to_version }}: {{ document.title }} - Folio{% endblock %}
+
+{% block content %}
+<header>
+    <hgroup>
+        <h2>{{ document.title }}</h2>
+        <p>
+            Comparing version {{ from_version }} to version {{ to_version }}
+            &middot; <a href="{{ url_for('documents.history', slug=document.slug) }}">Back to history</a>
+        </p>
+    </hgroup>
+</header>
+
+<div class="diff-view">
+    {{ diff_html }}
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.title }} - Folio{% endblock %}
+
+{% block content %}
+<div class="document-view">
+    <!-- Breadcrumbs -->
+    <nav class="breadcrumbs">
+        <a href="{{ url_for('documents.index') }}">Documents</a>
+        {% for label, slug_prefix in document.breadcrumbs[:-1] %}
+        / <a href="{{ url_for('documents.index', prefix=slug_prefix) }}">{{ label }}</a>
+        {% endfor %}
+    </nav>
+
+    <!-- Document header -->
+    <header>
+        <hgroup>
+            <h2>{{ document.title }}</h2>
+            <p>
+                Created by {{ document.created_by }} on {{ document.created_at | localdate }}
+                &middot; Updated {{ document.updated_at | localdatetime }}
+                {% if version_count > 0 %}
+                &middot; {{ version_count }} version{{ 's' if version_count != 1 }}
+                {% endif %}
+            </p>
+        </hgroup>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="doc-toolbar">
+        {% if document.is_markdown %}
+        <a href="{{ url_for('documents.edit', slug=document.slug) }}" role="button" class="outline">Edit</a>
+        {% endif %}
+        <a href="{{ url_for('documents.history', slug=document.slug) }}" role="button" class="outline secondary">History</a>
+        <form method="post" action="{{ url_for('documents.delete', slug=document.slug) }}" style="display:inline"
+              onsubmit="return confirm('Delete this document?');">
+            <button type="submit" class="outline secondary">Delete</button>
+        </form>
+    </div>
+
+    <!-- Tags -->
+    {% if tags %}
+    <div class="tag-list">
+        {% for tag in tags %}
+        <span class="tag-badge" style="background-color: {{ tag.color }}">{{ tag.name }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Document layout with TOC -->
+    <div class="document-layout{% if toc_items %} has-toc{% endif %}">
+        {% if toc_items %}
+        <aside class="document-toc">
+            <strong>Contents</strong>
+            <ul>
+                {% for item in toc_items %}
+                <li style="padding-left: {{ (item.level - 1) * 0.75 }}rem">
+                    <a href="#{{ item.anchor }}">{{ item.title }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </aside>
+        {% endif %}
+
+        <article class="document-content">
+            {% if document.is_markdown %}
+            <div class="markdown-content">
+                {{ document.current_content | markdown_block }}
+            </div>
+            {% else %}
+            <p>Binary document ({{ document.mime_type }})</p>
+            {% endif %}
+        </article>
+    </div>
+
+    <!-- Attachments -->
+    {% if attachments %}
+    <section class="document-attachments">
+        <h3>Attachments</h3>
+        <ul>
+            {% for att in attachments %}
+            <li>
+                <a href="{{ url_for('documents.serve_attachment', attachment_id=att.id) }}">{{ att.filename }}</a>
+                <small class="attachment-meta">uploaded by {{ att.uploaded_by }} on {{ att.created_at | localdate }}</small>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

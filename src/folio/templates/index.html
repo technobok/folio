@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Folio - Document Management{% endblock %}
+
+{% block content %}
+<hgroup>
+    <h1>Folio</h1>
+    <p>Self-hosted document management</p>
+</hgroup>
+
+{% if g.user %}
+<div class="grid">
+    <a href="{{ url_for('documents.index') }}" role="button">Browse Documents</a>
+    <a href="{{ url_for('documents.new') }}" role="button" class="outline">New Document</a>
+    <a href="{{ url_for('documents.search') }}" role="button" class="secondary outline">Search</a>
+</div>
+{% else %}
+<p>Please <a href="{{ url_for('auth.login') }}">log in</a> to access documents.</p>
+{% endif %}
+{% endblock %}

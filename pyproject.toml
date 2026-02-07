@@ -1,0 +1,49 @@
+[project]
+name = "folio"
+version = "0.1.0"
+description = "A self-hosted document management system with versioning and search"
+requires-python = ">=3.14"
+dependencies = [
+    "flask>=3.0",
+    "apsw>=3.45",
+    "itsdangerous>=2.1",
+    "python-slugify>=8.0",
+    "python-dotenv>=1.0",
+    "mistune>=3.0",
+    "gunicorn>=23.0",
+    "click>=8.0",
+    "gatekeeper",
+]
+
+[tool.uv.sources]
+gatekeeper = { path = "../gatekeeper", editable = true }
+
+[project.scripts]
+folio-admin = "folio.cli:main"
+folio-web = "folio.web:main"
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "ty",
+    "pytest",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+folio = ["templates/**/*.html", "static/**/*"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+lint.select = ["E", "F", "I", "UP", "B"]
+lint.ignore = ["E501"]
+
+[tool.ty.environment]
+python-version = "3.14"

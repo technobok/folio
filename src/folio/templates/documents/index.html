@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Documents - Folio{% endblock %}
+
+{% block content %}
+<div class="documents-page">
+    <header>
+        <hgroup>
+            <h2>Documents</h2>
+            {% if prefix %}
+            <p>
+                <a href="{{ url_for('documents.index') }}">root</a>
+                {% for label, crumb_prefix in breadcrumbs %}
+                / <a href="{{ url_for('documents.index', prefix=crumb_prefix) }}">{{ label }}</a>
+                {% endfor %}
+            </p>
+            {% endif %}
+        </hgroup>
+        <a href="{{ url_for('documents.new', parent=prefix) }}" role="button">New Document</a>
+    </header>
+
+    {% if folders %}
+    <h3>Folders</h3>
+    <div class="folder-list">
+        {% for folder in folders %}
+        <a href="{{ url_for('documents.index', prefix=(prefix + '/' + folder if prefix else folder)) }}" class="folder-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            {{ folder }}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if documents %}
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Updated</th>
+                <th>Author</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc in documents %}
+            <tr>
+                <td><a href="{{ url_for('documents.view', slug=doc.slug) }}">{{ doc.title }}</a></td>
+                <td>
+                    {% if doc.is_markdown %}
+                    <span class="type-badge type-markdown">MD</span>
+                    {% else %}
+                    <span class="type-badge type-binary">{{ doc.mime_type.split('/')[-1][:6] }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ doc.updated_at | localdate }}</td>
+                <td>{{ doc.created_by }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% elif not folders %}
+    <p class="no-activity">No documents yet. <a href="{{ url_for('documents.new', parent=prefix) }}">Create one</a>.</p>
+    {% endif %}
+</div>
+{% endblock %}

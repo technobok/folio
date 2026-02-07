@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Edit: {{ document.title }} - Folio{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor/dist/index.css" />
+{% endblock %}
+
+{% block content %}
+<h2>Edit: {{ document.title }}</h2>
+
+<form method="post" id="document-form">
+    <details>
+        <summary>Title &amp; slug</summary>
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" value="{{ document.title }}">
+    </details>
+
+    <input type="hidden" name="content" id="content-field" value="">
+    <div id="vditor"></div>
+
+    <label for="message">Edit summary (optional)</label>
+    <input type="text" id="message" name="message" placeholder="Describe your changes">
+
+    <div class="form-actions">
+        <button type="submit">Save</button>
+        <a href="{{ url_for('documents.view', slug=document.slug) }}" role="button" class="outline secondary">Cancel</a>
+    </div>
+</form>
+
+<section style="margin-top: 2rem;">
+    <h3>Upload attachment</h3>
+    <form method="post" action="{{ url_for('documents.upload_attachment', slug=document.slug) }}" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <button type="submit" class="outline">Upload</button>
+    </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/vditor/dist/index.min.js"></script>
+<script>
+var initialContent = {{ document.current_content | tojson }};
+
+var vditor = new Vditor('vditor', {
+    height: 500,
+    mode: 'wysiwyg',
+    lang: 'en_US',
+    value: initialContent || '',
+    theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'classic',
+    cache: { enable: false },
+    toolbar: [
+        'headings', 'bold', 'italic', 'strike', '|',
+        'list', 'ordered-list', 'check', '|',
+        'quote', 'code', 'inline-code', '|',
+        'link', 'upload', 'table', '|',
+        'undo', 'redo', '|',
+        'outline', 'fullscreen',
+    ],
+    upload: {
+        url: '{{ url_for("documents.upload_attachment", slug=document.slug) }}',
+        multiple: false,
+        fieldName: 'file',
+        accept: 'image/*',
+    },
+    after: function() {
+        var modeCheckbox = document.getElementById('mode-checkbox');
+        if (modeCheckbox) {
+            modeCheckbox.addEventListener('change', function() {
+                vditor.setTheme(this.checked ? 'dark' : 'classic');
+            });
+        }
+    },
+});
+
+document.getElementById('document-form').addEventListener('submit', function() {
+    document.getElementById('content-field').value = vditor.getValue();
+});
+</script>
+{% endblock %}

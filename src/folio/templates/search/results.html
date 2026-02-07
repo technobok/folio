@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Search - Folio{% endblock %}
+
+{% block content %}
+<h2>Search Documents</h2>
+
+<form method="get" action="{{ url_for('documents.search') }}">
+    <div class="grid">
+        <input type="search" name="q" value="{{ query }}" placeholder="Search documents..." autofocus>
+        <button type="submit" style="max-width: 120px;">Search</button>
+    </div>
+</form>
+
+{% if query %}
+<p>{{ results | length }} result{{ 's' if results | length != 1 }} for &ldquo;{{ query }}&rdquo;</p>
+
+{% if results %}
+<div class="search-results">
+    {% for result in results %}
+    <article class="search-result">
+        <h3><a href="{{ url_for('documents.view', slug=result.slug) }}">{{ result.title }}</a></h3>
+        {% if result.snippet %}
+        <p class="search-snippet">{{ result.snippet | safe }}</p>
+        {% endif %}
+        <small>{{ result.mime_type }} &middot; Updated {{ result.updated_at | localdate }}</small>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<p class="no-activity">No documents match your query.</p>
+{% endif %}
+{% endif %}
+{% endblock %}
