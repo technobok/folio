@@ -133,12 +133,20 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
 
     # Initialize Gatekeeper client if configured
     gk_db_path = app.config.get("GATEKEEPER_DB_PATH", "")
+    gk_url = app.config.get("GATEKEEPER_URL", "")
+    gk_api_key = app.config.get("GATEKEEPER_API_KEY", "")
+
     if gk_db_path:
         from gatekeeper import GatekeeperClient
 
         gk = GatekeeperClient(db_path=gk_db_path)
-        cookie_name = app.config.get("GATEKEEPER_COOKIE_NAME", "folio_session")
-        gk.init_app(app, cookie_name=cookie_name)
+        gk.init_app(app, cookie_name="gk_session")
+        app.config["GATEKEEPER_CLIENT"] = gk
+    elif gk_url and gk_api_key:
+        from gatekeeper import GatekeeperClient
+
+        gk = GatekeeperClient(server_url=gk_url, api_key=gk_api_key)
+        gk.init_app(app, cookie_name="gk_session")
         app.config["GATEKEEPER_CLIENT"] = gk
 
     @app.route("/")

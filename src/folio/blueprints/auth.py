@@ -107,7 +107,7 @@ def verify():
 
     # Create auth token and set cookie
     auth_token = gk.create_auth_token(user)
-    cookie_name = current_app.config.get("GATEKEEPER_COOKIE_NAME", "folio_session")
+    cookie_name = "gk_session"
 
     response = redirect(redirect_url or url_for("index"))
     response.set_cookie(
@@ -126,7 +126,7 @@ def verify():
 @bp.route("/logout")
 def logout():
     """Log out the current user."""
-    cookie_name = current_app.config.get("GATEKEEPER_COOKIE_NAME", "folio_session")
+    cookie_name = "gk_session"
     response = redirect(url_for("index"))
     response.delete_cookie(cookie_name)
     flash("You have been logged out.", "info")

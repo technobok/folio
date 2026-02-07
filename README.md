@@ -100,8 +100,9 @@ All settings are stored in the SQLite database (`app_setting` table) and managed
 | `server.dev_host` | string | `127.0.0.1` | Bind address for dev server |
 | `server.dev_port` | int | `5001` | Port for dev server |
 | `server.debug` | bool | `false` | Enable Flask debug mode |
-| `gatekeeper.db_path` | string | | Path to Gatekeeper SQLite database (required for login) |
-| `gatekeeper.cookie_name` | string | `folio_session` | Auth cookie name |
+| `gatekeeper.db_path` | string | | Path to Gatekeeper SQLite database (local mode) |
+| `gatekeeper.url` | string | | Gatekeeper HTTP API base URL (remote mode) |
+| `gatekeeper.api_key` | string | | Gatekeeper API key (remote mode) |
 | `uploads.max_size_mb` | int | `50` | Maximum upload size in MB |
 | `blobs.directory` | string | `instance/blobs` | Blob storage directory |
 | `proxy.x_forwarded_for` | int | `0` | Trust X-Forwarded-For (hop count) |

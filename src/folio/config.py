@@ -28,7 +28,8 @@ REGISTRY: list[ConfigEntry] = [
     ConfigEntry("server.debug", ConfigType.BOOL, False, "Enable Flask debug mode"),
     # -- gatekeeper --
     ConfigEntry("gatekeeper.db_path", ConfigType.STRING, "", "Path to Gatekeeper SQLite database"),
-    ConfigEntry("gatekeeper.cookie_name", ConfigType.STRING, "folio_session", "Auth cookie name"),
+    ConfigEntry("gatekeeper.url", ConfigType.STRING, "", "Gatekeeper HTTP API base URL"),
+    ConfigEntry("gatekeeper.api_key", ConfigType.STRING, "", "Gatekeeper API key", secret=True),
     # -- uploads --
     ConfigEntry("uploads.max_size_mb", ConfigType.INT, 50, "Maximum upload size in MB"),
     # -- blobs --
@@ -76,7 +77,8 @@ KEY_MAP: dict[str, str] = {
     "server.dev_port": "DEV_PORT",
     "server.debug": "DEBUG",
     "gatekeeper.db_path": "GATEKEEPER_DB_PATH",
-    "gatekeeper.cookie_name": "GATEKEEPER_COOKIE_NAME",
+    "gatekeeper.url": "GATEKEEPER_URL",
+    "gatekeeper.api_key": "GATEKEEPER_API_KEY",
     "uploads.max_size_mb": "MAX_UPLOAD_SIZE_MB",
     "blobs.directory": "BLOBS_DIRECTORY",
     "proxy.x_forwarded_for": "PROXY_X_FORWARDED_FOR",

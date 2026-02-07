@@ -10,7 +10,7 @@
 
     {% if not gatekeeper_configured %}
     <p>Gatekeeper authentication is not configured.</p>
-    <p>Set <code>gatekeeper.db_path</code> in Folio configuration to enable login.</p>
+    <p>Set <code>gatekeeper.db_path</code> or <code>gatekeeper.url</code> in Folio configuration to enable login.</p>
     {% else %}
     <form method="post">
         <label for="identifier">Username or email</label>
