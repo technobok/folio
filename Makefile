@@ -43,7 +43,7 @@ config-list:
 	@$(ADMIN) config list
 
 config-set:
-	@$(ADMIN) config set $(KEY) $(VAL)
+	@$(ADMIN) config set $(KEY) '$(VAL)'
 
 config-export:
 	@$(ADMIN) config export $(or $(FILE),$(file))
