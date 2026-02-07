@@ -25,48 +25,89 @@ A self-hosted document management system for storing, editing, versioning, and s
 cd /path/to/folio
 
 # Install dependencies
-uv sync --extra dev
+make sync
 
 # Initialise the database
-uv run folio-admin init-db
+make init-db
 
 # Point Folio at your Gatekeeper database
-uv run folio-admin config set gatekeeper.db_path /path/to/gatekeeper/instance/gatekeeper.sqlite3
+make config-set KEY=gatekeeper.db_path VAL=/path/to/gatekeeper/instance/gatekeeper.sqlite3
 
 # Start the development server
-uv run flask --app folio run --debug --port 5001
+make rundev
 ```
 
 Open http://127.0.0.1:5001 and log in with any user registered in Gatekeeper.
 
+### Database location
+
+By default the database is created at `instance/folio.sqlite3` relative to the project root. Set the `FOLIO_DB` environment variable to override:
+
+```bash
+export FOLIO_DB=/data/folio.sqlite3
+```
+
+The resolution order is:
+
+1. `FOLIO_DB` environment variable (if set)
+2. Flask `DATABASE_PATH` config (when running inside the web server)
+3. `instance/folio.sqlite3` relative to the source tree (fallback)
+
+All CLI commands (`folio-admin`, `make config-*`, `make init-db`) and the web server use the same resolution logic — set `FOLIO_DB` once and everything finds the database.
+
 ### Production
 
 ```bash
-uv run folio-web --host 0.0.0.0 --port 5001 --workers 4
+make run
 ```
 
-This runs gunicorn. Put nginx or Caddy in front for TLS.
+This runs gunicorn on 0.0.0.0:5001. Put nginx or Caddy in front for TLS.
 
-### CLI Reference
+## Makefile reference
 
-```bash
-folio-admin init-db                        # Create/migrate the database
-folio-admin config list                    # Show all settings
-folio-admin config get <key>               # Get a setting
-folio-admin config set <key> <value>       # Set a setting
+| Target | Description |
+|---|---|
+| `make sync` | Install/sync dependencies with uv |
+| `make init-db` | Create a blank database |
+| `make run` | Start production server (gunicorn, 0.0.0.0:5001) |
+| `make rundev` | Start development server (Flask debug mode) |
+| `make config-list` | Show all configuration settings |
+| `make config-set KEY=... VAL=...` | Set a configuration value |
+| `make config-export FILE=...` | Export all settings as a shell script |
+| `make check` | Run ruff (format + lint) and ty (type check) |
+| `make clean` | Remove bytecode and the database file |
+
+## CLI commands
+
+The `folio-admin` CLI provides the same operations outside of Make:
+
+```
+folio-admin init-db              # Initialize the database schema
+folio-admin config list          # Show settings
+folio-admin config get KEY       # Get a single setting
+folio-admin config set KEY VAL   # Set a setting
+folio-admin config export FILE   # Export all settings as a shell script
 ```
 
-### Configuration
+## Configuration reference
 
-All configuration is stored in the SQLite database (`app_setting` table). Key settings:
+All settings are stored in the SQLite database (`app_setting` table) and managed via `make config-set` or `folio-admin config set`. Use `make config-list` to see current values.
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `gatekeeper.db_path` | (empty) | Path to Gatekeeper SQLite database. Required for login. |
-| `gatekeeper.cookie_name` | `folio_session` | Auth cookie name |
-| `uploads.max_size_mb` | `50` | Maximum upload size in MB |
-| `blobs.directory` | `instance/blobs` | Blob storage directory |
-| `server.port` | `5001` | Production server port |
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `server.host` | string | `0.0.0.0` | Bind address for production server |
+| `server.port` | int | `5001` | Port for production server |
+| `server.dev_host` | string | `127.0.0.1` | Bind address for dev server |
+| `server.dev_port` | int | `5001` | Port for dev server |
+| `server.debug` | bool | `false` | Enable Flask debug mode |
+| `gatekeeper.db_path` | string | | Path to Gatekeeper SQLite database (required for login) |
+| `gatekeeper.cookie_name` | string | `folio_session` | Auth cookie name |
+| `uploads.max_size_mb` | int | `50` | Maximum upload size in MB |
+| `blobs.directory` | string | `instance/blobs` | Blob storage directory |
+| `proxy.x_forwarded_for` | int | `0` | Trust X-Forwarded-For (hop count) |
+| `proxy.x_forwarded_proto` | int | `0` | Trust X-Forwarded-Proto (hop count) |
+| `proxy.x_forwarded_host` | int | `0` | Trust X-Forwarded-Host (hop count) |
+| `proxy.x_forwarded_prefix` | int | `0` | Trust X-Forwarded-Prefix (hop count) |
 
 ## Project Structure
 
@@ -199,21 +240,12 @@ Folio and Cadence are independent systems. If you need to reference a Cadence ta
 ## Development
 
 ```bash
-# Install with dev dependencies
-uv sync --extra dev
+make sync          # Install with dev dependencies
+make check         # Format, lint, and type check
+make rundev        # Run dev server (127.0.0.1:5001, debug mode)
 
 # Run tests
-uv run pytest tests/ -v
-
-# Type check
-uv run ty check src/
-
-# Format and lint
-uv run ruff format src/ tests/
-uv run ruff check src/ tests/ --fix
-
-# Run dev server
-uv run flask --app folio run --debug --port 5001
+.venv/bin/pytest tests/ -v
 ```
 
 ## Roadmap
