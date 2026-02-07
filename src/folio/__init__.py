@@ -134,7 +134,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     # Initialize Gatekeeper client if configured
     gk_db_path = app.config.get("GATEKEEPER_DB_PATH", "")
     if gk_db_path:
-        from gatekeeper_client import GatekeeperClient
+        from gatekeeper import GatekeeperClient
 
         gk = GatekeeperClient(db_path=gk_db_path)
         cookie_name = app.config.get("GATEKEEPER_COOKIE_NAME", "folio_session")
