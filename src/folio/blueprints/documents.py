@@ -187,18 +187,28 @@ def edit(slug: str):
         title = request.form.get("title", "").strip()
         username = get_username()
 
-        if title and title != doc.title:
+        # Capture old values before any mutations (needed for FTS update)
+        old_title = doc.title
+        old_content = doc.current_content or ""
+
+        title_changed = bool(title and title != doc.title)
+        content_changed = content != doc.current_content
+
+        if title_changed:
             doc.update(title=title)
 
-        # Only create version if content changed
-        if content != doc.current_content:
+        if content_changed:
             version_service.save_version(
                 document_id=doc.id,
                 content=content,
                 author=username,
                 message=message,
             )
-            search_service.index_document(doc.id, doc.title, content)
+
+        if title_changed or content_changed:
+            search_service.index_document(
+                doc.id, doc.title, content, old_title=old_title, old_content=old_content
+            )
             flash("Document saved.", "success")
         else:
             flash("No changes detected.", "info")
@@ -280,7 +290,7 @@ def diff(slug: str):
 def delete(slug: str):
     """Delete a document."""
     doc = _get_doc_or_404(slug)
-    search_service.remove_from_index(doc.id)
+    search_service.remove_from_index(doc.id, doc.title, doc.current_content or "")
     doc.delete()
     flash("Document deleted.", "success")
     return redirect(url_for("documents.index"))

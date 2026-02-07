@@ -3,25 +3,48 @@
 from folio.db import get_db
 
 
-def index_document(document_id: int, title: str, content_text: str, tags_text: str = "") -> None:
-    """Add or update a document in the FTS index."""
+def _delete_from_fts(
+    document_id: int, old_title: str, old_content: str, old_tags: str = ""
+) -> None:
+    """Remove existing entry from the contentless FTS index.
+
+    Contentless FTS5 tables do not support regular DELETE.  Instead we
+    must use the 'delete' command and supply the original column values
+    so the inverted index can be updated.
+    """
     db = get_db()
-    # Delete existing entry
     db.execute(
-        "DELETE FROM document_fts WHERE rowid = ?",
-        (document_id,),
+        "INSERT INTO document_fts(document_fts, rowid, title, content_text, tags_text) "
+        "VALUES('delete', ?, ?, ?, ?)",
+        (document_id, old_title, old_content, old_tags),
     )
-    # Insert new entry
+
+
+def index_document(
+    document_id: int,
+    title: str,
+    content_text: str,
+    tags_text: str = "",
+    old_title: str | None = None,
+    old_content: str | None = None,
+) -> None:
+    """Add or update a document in the FTS index.
+
+    For updates, pass old_title and old_content so the previous FTS
+    entry can be removed from the contentless index.
+    """
+    db = get_db()
+    if old_title is not None and old_content is not None:
+        _delete_from_fts(document_id, old_title, old_content)
     db.execute(
         "INSERT INTO document_fts (rowid, title, content_text, tags_text) VALUES (?, ?, ?, ?)",
         (document_id, title, content_text, tags_text),
     )
 
 
-def remove_from_index(document_id: int) -> None:
+def remove_from_index(document_id: int, title: str, content: str) -> None:
     """Remove a document from the FTS index."""
-    db = get_db()
-    db.execute("DELETE FROM document_fts WHERE rowid = ?", (document_id,))
+    _delete_from_fts(document_id, title, content)
 
 
 def search(query: str, limit: int = 50) -> list[dict]:
