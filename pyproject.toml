@@ -7,7 +7,7 @@ dependencies = [
     "flask>=3.0",
     "apsw>=3.45",
     "itsdangerous>=2.1",
-    "python-slugify>=8.0",
+
     "python-dotenv>=1.0",
     "mistune>=3.0",
     "gunicorn>=23.0",

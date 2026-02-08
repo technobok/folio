@@ -131,6 +131,21 @@ def test_search(app):
         doc.delete()
 
 
+def test_folio_slugify():
+    """Test custom slugify preserves dots and leading dots."""
+    from folio.models.document import folio_slugify
+
+    assert folio_slugify("photo.png") == "photo.png"
+    assert folio_slugify(".hidden") == ".hidden"
+    assert folio_slugify("Hello World") == "hello-world"
+    assert folio_slugify("") == ""
+    assert folio_slugify("!!!") == ""
+    assert folio_slugify("  Spaced  Out  ") == "spaced-out"
+    assert folio_slugify("café") == "cafe"
+    assert folio_slugify("my--file---name") == "my-file-name"
+    assert folio_slugify("file  name.tar.gz") == "file-name.tar.gz"
+
+
 def test_tags(app):
     """Test tag creation and association."""
     with app.app_context():

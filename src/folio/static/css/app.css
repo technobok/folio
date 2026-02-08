@@ -545,6 +545,37 @@ footer small {
     margin-left: 0.5rem;
 }
 
+/* ---- Reader mode toggle ---- */
+
+.reader-toggle {
+    float: right;
+    font-size: 0.8rem;
+    color: var(--pico-muted-color);
+    cursor: pointer;
+    user-select: none;
+}
+
+.reader-toggle input {
+    vertical-align: middle;
+    margin-right: 0.25rem;
+}
+
+.document-view.reader-mode .doc-toolbar {
+    display: none;
+}
+
+.document-view.reader-mode header hgroup p {
+    display: none;
+}
+
+.document-view.reader-mode .tag-list {
+    display: none;
+}
+
+.document-view.reader-mode .document-attachments {
+    display: none;
+}
+
 /* Responsive: collapse TOC on small screens */
 @media (max-width: 768px) {
     .document-layout.has-toc {

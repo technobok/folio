@@ -81,7 +81,12 @@ var vditor = new Vditor('vditor', {
         fieldName: 'file',
         accept: 'image/*',
     },
+    input: function() {
+        window._folioEditorDirty = true;
+    },
     after: function() {
+        window._folioEditorDirty = false;
+
         vditor.vditor.options.outline.enable = true;
         vditor.vditor.options.outline.position = 'right';
         var outlineBtn = document.querySelector('.vditor-toolbar [data-type="outline"]');
@@ -96,7 +101,14 @@ var vditor = new Vditor('vditor', {
     },
 });
 
+window.addEventListener('beforeunload', function(e) {
+    if (window._folioEditorDirty) {
+        e.preventDefault();
+    }
+});
+
 document.getElementById('document-form').addEventListener('submit', function() {
+    window._folioEditorDirty = false;
     document.getElementById('content-field').value = vditor.getValue();
 });
 </script>

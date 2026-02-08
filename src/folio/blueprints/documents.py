@@ -19,7 +19,7 @@ from markupsafe import Markup
 
 from folio.blueprints.auth import get_username, login_required
 from folio.db import transaction
-from folio.models.document import Document
+from folio.models.document import Document, folio_slugify
 from folio.models.document_version import DocumentVersion
 from folio.models.file_blob import FileBlob
 from folio.models.tag import Tag
@@ -98,7 +98,8 @@ def new():
             flash("Title is required.", "error")
             return render_template("documents/new.html", parent_path=parent_path)
 
-        slug = request.form.get("slug", "").strip() or None
+        raw_slug = request.form.get("slug", "").strip()
+        slug = folio_slugify(raw_slug) if raw_slug else None
         content = request.form.get("content", "")
         username = get_username()
 
@@ -146,21 +147,22 @@ def upload_file():
             return render_template("documents/upload_file.html", parent_path=parent_path)
 
         filename = file.filename
+        title = request.form.get("title", "").strip() or filename
         mime_type = file.content_type or "application/octet-stream"
         username = get_username()
 
         custom_slug = request.form.get("slug", "").strip()
         if custom_slug:
-            slug = custom_slug
+            slug = folio_slugify(custom_slug) or Document.generate_slug(title, parent_path)
         else:
-            slug = Document.generate_slug(filename, parent_path)
+            slug = Document.generate_slug(title, parent_path)
 
         # If file is markdown, create a text document with content
         is_md = mime_type == "text/markdown" or filename.lower().endswith(".md")
         if is_md:
             text = content.decode("utf-8", errors="replace")
             doc = Document.create(
-                title=filename,
+                title=title,
                 created_by=username,
                 content=text,
                 mime_type="text/markdown",
@@ -178,7 +180,7 @@ def upload_file():
 
         # Binary file — create document + blob
         doc = Document.create(
-            title=filename,
+            title=title,
             created_by=username,
             content=None,
             mime_type=mime_type,

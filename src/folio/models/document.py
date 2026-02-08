@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import re
+import secrets
+import unicodedata
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
@@ -9,9 +12,27 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from folio.models.file_blob import FileBlob
 
-from slugify import slugify
-
 from folio.db import get_db, transaction
+
+
+def folio_slugify(text: str) -> str:
+    """Slugify text while preserving dots and leading dots.
+
+    Unlike python-slugify, this keeps '.' intact so filenames like
+    'photo.png' and '.hidden' produce 'photo.png' and '.hidden'.
+    """
+    if not text:
+        return ""
+    # Transliterate accented characters to ASCII
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    text = text.lower()
+    # Keep only letters, digits, dots, hyphens, and spaces
+    text = re.sub(r"[^a-z0-9.\-\s]", "", text)
+    # Collapse whitespace and hyphens into a single hyphen
+    text = re.sub(r"[\s\-]+", "-", text)
+    # Strip leading/trailing hyphens but preserve leading dots
+    text = text.strip("-")
+    return text
 
 
 def is_hidden_slug(slug: str) -> bool:
@@ -69,7 +90,7 @@ class Document:
     @staticmethod
     def generate_slug(title: str, parent_path: str = "") -> str:
         """Generate a unique slug from title, optionally under a parent path."""
-        base = slugify(title)
+        base = folio_slugify(title) or secrets.token_hex(4)
         if parent_path:
             parent_path = parent_path.strip("/")
             base = f"{parent_path}/{base}"

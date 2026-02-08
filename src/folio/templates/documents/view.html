@@ -3,13 +3,16 @@
 {% block title %}{{ document.title }} - Folio{% endblock %}
 
 {% block content %}
-<div class="document-view">
-    <!-- Breadcrumbs -->
+<div class="document-view reader-mode">
+    <!-- Breadcrumbs + reader toggle -->
     <nav class="breadcrumbs">
         <a href="{{ url_for('documents.index') }}">Documents</a>
         {% for label, slug_prefix in document.breadcrumbs[:-1] %}
         / <a href="{{ url_for('documents.index', prefix=slug_prefix) }}">{{ label }}</a>
         {% endfor %}
+        <label class="reader-toggle">
+            <input type="checkbox" id="reader-toggle" checked> Reader mode
+        </label>
     </nav>
 
     <!-- Document header -->
@@ -88,4 +91,27 @@
     </section>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var toggle = document.getElementById('reader-toggle');
+    var view = document.querySelector('.document-view');
+    var stored = localStorage.getItem('folio-reader-mode');
+    if (stored === 'false') {
+        view.classList.remove('reader-mode');
+        toggle.checked = false;
+    }
+    toggle.addEventListener('change', function() {
+        if (this.checked) {
+            view.classList.add('reader-mode');
+            localStorage.setItem('folio-reader-mode', 'true');
+        } else {
+            view.classList.remove('reader-mode');
+            localStorage.setItem('folio-reader-mode', 'false');
+        }
+    });
+})();
+</script>
 {% endblock %}

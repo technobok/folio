@@ -13,6 +13,9 @@
     <label for="file">File</label>
     <input type="file" id="file" name="file" required>
 
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" placeholder="defaults to filename">
+
     <details>
         <summary>Slug (optional)</summary>
         <label for="slug">Custom slug</label>
@@ -29,4 +32,15 @@
 </form>
 
 <small>Markdown files (.md) will be imported as editable text documents. All other files are stored as binary documents.</small>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('file').addEventListener('change', function() {
+    var titleInput = document.getElementById('title');
+    if (!titleInput.value && this.files.length) {
+        titleInput.value = this.files[0].name;
+    }
+});
+</script>
 {% endblock %}
