@@ -43,8 +43,8 @@
     </details>
 </form>
 
-{% if query %}
-<p>{{ results | length }} result{{ 's' if results | length != 1 }} for &ldquo;{{ query }}&rdquo;</p>
+{% if query or active_type or active_tag or active_date_from or active_date_to %}
+<p>{{ results | length }} result{{ 's' if results | length != 1 }}{% if query %} for &ldquo;{{ query }}&rdquo;{% endif %}</p>
 
 {% if results %}
 <div class="search-results">
@@ -59,7 +59,7 @@
     {% endfor %}
 </div>
 {% else %}
-<p class="no-activity">No documents match your query.</p>
+<p class="no-activity">No documents match your search.</p>
 {% endif %}
 {% endif %}
 {% endblock %}
