@@ -856,6 +856,20 @@ select.tomselected {
     margin-bottom: 1rem;
 }
 
+#tags-section .ts-wrapper.multi .ts-control {
+    min-height: 2.5rem;
+    padding: 0.25rem 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: flex-start;
+}
+
+#tags-section .ts-wrapper.multi .ts-control > input {
+    flex: 1 1 auto;
+    min-width: 100px;
+    width: auto !important;
+}
+
 .tags-control {
     margin-top: 0.5rem;
     margin-bottom: 1rem;
