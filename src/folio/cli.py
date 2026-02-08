@@ -191,6 +191,43 @@ def rebuild_index_command():
         click.echo(f"Rebuilt FTS index: {count} documents indexed.")
 
 
+@main.command("migrate-schema")
+def migrate_schema_command():
+    """Migrate database schema to latest version (currently v3).
+
+    Recreates the FTS index as a regular (non-contentless) table.
+    After migrating, run `folio-admin rebuild-index` to populate it.
+    """
+    app = _make_app()
+    with app.app_context():
+        from folio.db import get_db
+
+        db = get_db()
+        row = db.execute(
+            "SELECT value FROM db_metadata WHERE key = 'schema_version'"
+        ).fetchone()
+        version = str(row[0]) if row else "1"
+
+        if int(version) >= 3:
+            click.echo(f"Schema already at version {version}, nothing to do.")
+            return
+
+        click.echo(f"Migrating schema from version {version} to 3...")
+
+        # v2 → v3: switch FTS from contentless to regular
+        db.execute("DROP TABLE IF EXISTS document_fts")
+        db.execute(
+            "CREATE VIRTUAL TABLE document_fts USING fts5("
+            "title, content_text, tags_text, tokenize='porter unicode61')"
+        )
+        db.execute(
+            "INSERT OR REPLACE INTO db_metadata (key, value) VALUES ('schema_version', '3')"
+        )
+
+        click.echo("Schema migrated to version 3.")
+        click.echo("Run `folio-admin rebuild-index` to populate the search index.")
+
+
 @main.command("migrate-attachments")
 def migrate_attachments_command():
     """Migrate attachment rows to document-based attachments (one-time)."""

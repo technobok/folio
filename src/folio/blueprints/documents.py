@@ -22,7 +22,7 @@ from folio.models.document import Document, folio_slugify
 from folio.models.document_version import DocumentVersion
 from folio.models.file_blob import FileBlob
 from folio.models.tag import Tag
-from folio.services import blob_service, search_service, version_service
+from folio.services import blob_service, extraction_service, search_service, version_service
 
 bp = Blueprint("documents", __name__, url_prefix="/documents")
 
@@ -177,10 +177,11 @@ def upload_file():
             return redirect(url_for("documents.view", slug=doc.slug))
 
         # Binary file — create document + blob
+        extracted_text = extraction_service.extract_text(content, mime_type)
         doc = Document.create(
             title=title,
             created_by=username,
-            content=None,
+            content=extracted_text or None,
             mime_type=mime_type,
             slug=slug,
         )
@@ -198,7 +199,7 @@ def upload_file():
                 (doc.id, blob.id),
             )
 
-        search_service.index_document(doc.id, doc.title, "")
+        search_service.index_document(doc.id, doc.title, extracted_text)
         flash("File uploaded.", "success")
         return redirect(url_for("documents.view", slug=doc.slug))
 
@@ -272,10 +273,6 @@ def edit(slug: str):
         title = request.form.get("title", "").strip()
         username = get_username()
 
-        # Capture old values before any mutations (needed for FTS update)
-        old_title = doc.title
-        old_content = doc.current_content or ""
-
         title_changed = bool(title and title != doc.title)
         content_changed = content != doc.current_content
 
@@ -291,9 +288,7 @@ def edit(slug: str):
             )
 
         if title_changed or content_changed:
-            search_service.index_document(
-                doc.id, doc.title, content, old_title=old_title, old_content=old_content
-            )
+            search_service.index_document(doc.id, doc.title, content)
             flash("Document saved.", "success")
         else:
             flash("No changes detected.", "info")
@@ -381,7 +376,7 @@ def delete(slug: str):
     for att_doc in Document.list_attachments(doc.slug):
         blob_service.delete_binary_document(att_doc)
 
-    search_service.remove_from_index(doc.id, doc.title, doc.current_content or "")
+    search_service.remove_from_index(doc.id)
     doc.delete()
     flash("Document deleted.", "success")
     return redirect(url_for("documents.index"))
@@ -470,12 +465,26 @@ def serve_attachment(attachment_id: int):
 def search():
     """Search documents."""
     query = request.args.get("q", "").strip()
+    mime_type = request.args.get("type", "").strip() or None
+    tag = request.args.get("tag", "").strip() or None
+    date_from = request.args.get("date_from", "").strip() or None
+    date_to = request.args.get("date_to", "").strip() or None
+
     results: list[dict] = []
     if query:
-        results = search_service.search(query)
+        results = search_service.search(
+            query, mime_type=mime_type, tag=tag, date_from=date_from, date_to=date_to
+        )
+
+    facets = search_service.get_search_facets()
 
     return render_template(
         "search/results.html",
         query=query,
         results=results,
+        facets=facets,
+        active_type=mime_type or "",
+        active_tag=tag or "",
+        active_date_from=date_from or "",
+        active_date_to=date_to or "",
     )

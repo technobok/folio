@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS db_metadata (
     value TEXT NOT NULL
 );
 
-INSERT OR IGNORE INTO db_metadata (key, value) VALUES ('schema_version', '2');
+INSERT OR IGNORE INTO db_metadata (key, value) VALUES ('schema_version', '3');
 
 -- Application settings
 CREATE TABLE IF NOT EXISTS app_setting (
@@ -107,7 +107,6 @@ CREATE VIRTUAL TABLE IF NOT EXISTS document_fts USING fts5(
     title,
     content_text,
     tags_text,
-    content='',
     tokenize='porter unicode61'
 );
 

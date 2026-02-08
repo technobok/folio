@@ -10,6 +10,37 @@
         <input type="search" name="q" value="{{ query }}" placeholder="Search documents..." autofocus>
         <button type="submit" style="max-width: 120px;">Search</button>
     </div>
+
+    <details {{ 'open' if active_type or active_tag or active_date_from or active_date_to }}>
+        <summary>Filters</summary>
+        <div class="grid">
+            <label>
+                Type
+                <select name="type">
+                    <option value="">All</option>
+                    <option value="markdown" {{ 'selected' if active_type == 'markdown' }}>Markdown</option>
+                    <option value="binary" {{ 'selected' if active_type == 'binary' }}>Binary / Uploaded</option>
+                </select>
+            </label>
+            <label>
+                Tag
+                <select name="tag">
+                    <option value="">All tags</option>
+                    {% for t in facets.tags %}
+                    <option value="{{ t }}" {{ 'selected' if active_tag == t }}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                From
+                <input type="date" name="date_from" value="{{ active_date_from }}">
+            </label>
+            <label>
+                To
+                <input type="date" name="date_to" value="{{ active_date_to }}">
+            </label>
+        </div>
+    </details>
 </form>
 
 {% if query %}
