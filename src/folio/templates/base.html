@@ -23,6 +23,7 @@
                 {% if g.user %}
                 <li><a href="{{ url_for('documents.index') }}">Documents</a></li>
                 <li><a href="{{ url_for('documents.search') }}">Search</a></li>
+                <li><a href="{{ url_for('admin_sql.index') }}">SQL</a></li>
                 {% endif %}
                 {% if g.user %}
                 <li>{{ g.user.fullname or g.user.username }}</li>

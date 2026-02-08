@@ -13,9 +13,20 @@
     <label for="file">File</label>
     <input type="file" id="file" name="file" required>
 
+    <details>
+        <summary>Slug (optional)</summary>
+        <label for="slug">Custom slug</label>
+        <input type="text" id="slug" name="slug" placeholder="auto-generated-from-filename">
+        {% if parent_path %}
+        <small>Will be created under: {{ parent_path }}/</small>
+        {% endif %}
+    </details>
+
     <div class="form-actions">
         <button type="submit">Upload</button>
         <button type="button" onclick="location.href='{{ url_for('documents.index', prefix=parent_path) }}'" class="outline secondary">Cancel</button>
     </div>
 </form>
+
+<small>Markdown files (.md) will be imported as editable text documents. All other files are stored as binary documents.</small>
 {% endblock %}

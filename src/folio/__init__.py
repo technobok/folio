@@ -126,10 +126,11 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
         return Markup(str(md(text)))
 
     # Register blueprints
-    from folio.blueprints import auth, documents
+    from folio.blueprints import admin_sql, auth, documents
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(documents.bp)
+    app.register_blueprint(admin_sql.bp)
 
     # Initialize Gatekeeper client if configured
     gk_db_path = app.config.get("GATEKEEPER_DB_PATH", "")

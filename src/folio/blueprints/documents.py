@@ -130,7 +130,7 @@ def new():
 @bp.route("/upload-file", methods=["GET", "POST"])
 @login_required
 def upload_file():
-    """Upload a standalone binary document (PDF, image, etc.)."""
+    """Upload a file as a standalone document."""
     parent_path = request.args.get("parent", "")
 
     if request.method == "POST":
@@ -144,13 +144,39 @@ def upload_file():
         if len(content) > max_size:
             flash("File too large.", "error")
             return render_template("documents/upload_file.html", parent_path=parent_path)
-        file.seek(0)
 
         filename = file.filename
         mime_type = file.content_type or "application/octet-stream"
         username = get_username()
 
-        slug = Document.generate_slug(filename, parent_path)
+        custom_slug = request.form.get("slug", "").strip()
+        if custom_slug:
+            slug = custom_slug
+        else:
+            slug = Document.generate_slug(filename, parent_path)
+
+        # If file is markdown, create a text document with content
+        is_md = mime_type == "text/markdown" or filename.lower().endswith(".md")
+        if is_md:
+            text = content.decode("utf-8", errors="replace")
+            doc = Document.create(
+                title=filename,
+                created_by=username,
+                content=text,
+                mime_type="text/markdown",
+                slug=slug,
+            )
+            DocumentVersion.create(
+                document_id=doc.id,
+                content=text,
+                author=username,
+                message="Uploaded file",
+            )
+            search_service.index_document(doc.id, doc.title, text)
+            flash("Markdown document created from file.", "success")
+            return redirect(url_for("documents.view", slug=doc.slug))
+
+        # Binary file — create document + blob
         doc = Document.create(
             title=filename,
             created_by=username,
@@ -159,7 +185,6 @@ def upload_file():
             slug=slug,
         )
 
-        # Save blob and link
         sha256_hash = hashlib.sha256(content).hexdigest()
         blob, created = FileBlob.get_or_create(sha256_hash, len(content), mime_type)
         if created:

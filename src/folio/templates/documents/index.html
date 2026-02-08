@@ -9,9 +9,9 @@
             <h2>Documents</h2>
             {% if prefix %}
             <p>
-                <a href="{{ url_for('documents.index') }}">root</a>
+                <a href="{{ url_for('documents.index', show_hidden='1' if show_hidden else none) }}">root</a>
                 {% for label, crumb_prefix in breadcrumbs %}
-                / <a href="{{ url_for('documents.index', prefix=crumb_prefix) }}">{{ label }}</a>
+                / <a href="{{ url_for('documents.index', prefix=crumb_prefix, show_hidden='1' if show_hidden else none) }}">{{ label }}</a>
                 {% endfor %}
             </p>
             {% endif %}
@@ -31,7 +31,7 @@
     <h3>Folders</h3>
     <div class="folder-list">
         {% for folder in folders %}
-        <a href="{{ url_for('documents.index', prefix=(prefix + '/' + folder if prefix else folder)) }}" class="folder-item">
+        <a href="{{ url_for('documents.index', prefix=(prefix + '/' + folder if prefix else folder), show_hidden='1' if show_hidden else none) }}" class="folder-item">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
             {{ folder }}
         </a>
