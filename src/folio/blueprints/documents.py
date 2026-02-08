@@ -215,7 +215,8 @@ def edit(slug: str):
 
         return redirect(url_for("documents.view", slug=doc.slug))
 
-    return render_template("documents/edit.html", document=doc)
+    attachments = Attachment.list_for_document(doc.id)
+    return render_template("documents/edit.html", document=doc, attachments=attachments)
 
 
 # ---------------------------------------------------------------------------
