@@ -486,23 +486,80 @@ footer small {
     font-style: italic;
 }
 
-/* ---- Diff view ---- */
+/* ---- Diff view (GitHub-style unified) ---- */
 
 .diff-view {
     overflow-x: auto;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
 }
 
-.diff-view table {
+.diff-table {
     font-family: monospace;
     font-size: 0.85rem;
     width: 100%;
+    border-collapse: collapse;
+    margin: 0;
 }
 
-.diff-view table td {
+.diff-table td {
+    padding: 0 0.5rem;
+    line-height: 1.5;
+    vertical-align: top;
+    border: none;
+}
+
+.diff-ln {
+    width: 3rem;
+    min-width: 3rem;
+    text-align: right;
+    color: var(--pico-muted-color);
+    user-select: none;
+    opacity: 0.6;
+}
+
+.diff-marker {
+    width: 1.5rem;
+    min-width: 1.5rem;
+    text-align: center;
+    font-weight: 700;
+    user-select: none;
+}
+
+.diff-code {
     white-space: pre-wrap;
     word-break: break-all;
-    padding: 0.2rem 0.5rem;
-    vertical-align: top;
+}
+
+.diff-add {
+    background-color: rgba(46, 160, 67, 0.15);
+}
+
+.diff-add .diff-marker {
+    color: #2ea043;
+}
+
+.diff-del {
+    background-color: rgba(248, 81, 73, 0.15);
+}
+
+.diff-del .diff-marker {
+    color: #f85149;
+}
+
+.diff-hunk {
+    background-color: rgba(56, 139, 253, 0.1);
+}
+
+.diff-hunk td {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    color: var(--pico-muted-color);
+    font-size: 0.8rem;
+}
+
+.diff-ctx {
+    background: transparent;
 }
 
 .diff-form {

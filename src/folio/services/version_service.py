@@ -2,6 +2,7 @@
 
 import difflib
 from dataclasses import dataclass
+from html import escape
 
 from folio.models.document_version import DocumentVersion
 
@@ -30,17 +31,74 @@ def compute_diff(old_content: str, new_content: str, context: int = 3) -> str:
 
 
 def compute_html_diff(old_content: str, new_content: str, context: int = 3) -> str:
-    """Compute an HTML table diff between two text contents."""
-    old_lines = old_content.splitlines()
-    new_lines = new_content.splitlines()
-    differ = difflib.HtmlDiff(wrapcolumn=80)
-    return differ.make_table(
+    """Compute a GitHub-style unified diff as an HTML table."""
+    old_lines = old_content.splitlines(keepends=True)
+    new_lines = new_content.splitlines(keepends=True)
+    diff = difflib.unified_diff(
         old_lines,
         new_lines,
-        fromdesc="Previous",
-        todesc="Current",
-        context=True,
-        numlines=context,
+        fromfile="previous",
+        tofile="current",
+        n=context,
+    )
+
+    rows: list[str] = []
+    old_num = 0
+    new_num = 0
+
+    for line in diff:
+        # Skip the --- and +++ file headers
+        if line.startswith("---") or line.startswith("+++"):
+            continue
+
+        text = escape(line.rstrip("\n"))
+
+        if line.startswith("@@"):
+            # Parse hunk header: @@ -old_start,old_count +new_start,new_count @@
+            parts = line.split()
+            old_range = parts[1]  # e.g. -1,5
+            new_range = parts[2]  # e.g. +1,7
+            old_num = int(old_range.split(",")[0].lstrip("-")) - 1
+            new_num = int(new_range.split(",")[0].lstrip("+")) - 1
+            rows.append(
+                f'<tr class="diff-hunk">'
+                f'<td class="diff-ln"></td><td class="diff-ln"></td>'
+                f'<td class="diff-marker"></td>'
+                f'<td class="diff-code">{text}</td></tr>'
+            )
+        elif line.startswith("-"):
+            old_num += 1
+            rows.append(
+                f'<tr class="diff-del">'
+                f'<td class="diff-ln">{old_num}</td><td class="diff-ln"></td>'
+                f'<td class="diff-marker">-</td>'
+                f'<td class="diff-code">{text[1:]}</td></tr>'
+            )
+        elif line.startswith("+"):
+            new_num += 1
+            rows.append(
+                f'<tr class="diff-add">'
+                f'<td class="diff-ln"></td><td class="diff-ln">{new_num}</td>'
+                f'<td class="diff-marker">+</td>'
+                f'<td class="diff-code">{text[1:]}</td></tr>'
+            )
+        else:
+            old_num += 1
+            new_num += 1
+            rows.append(
+                f'<tr class="diff-ctx">'
+                f'<td class="diff-ln">{old_num}</td><td class="diff-ln">{new_num}</td>'
+                f'<td class="diff-marker"></td>'
+                f'<td class="diff-code">{text[1:] if text.startswith(" ") else text}</td></tr>'
+            )
+
+    if not rows:
+        return '<p class="no-activity">No differences found.</p>'
+
+    return (
+        '<table class="diff-table"><tbody>'
+        + "\n".join(rows)
+        + "</tbody></table>"
     )
 
 
