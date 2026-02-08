@@ -74,6 +74,7 @@ This runs gunicorn on 0.0.0.0:5001. Put nginx or Caddy in front for TLS.
 | `make config-list` | Show all configuration settings |
 | `make config-set KEY=... VAL=...` | Set a configuration value |
 | `make config-export FILE=...` | Export all settings as a shell script |
+| `make rebuild-index` | Drop and rebuild the FTS5 full-text search index |
 | `make check` | Run ruff (format + lint) and ty (type check) |
 | `make clean` | Remove bytecode and the database file |
 
@@ -87,6 +88,7 @@ folio-admin config list          # Show settings
 folio-admin config get KEY       # Get a single setting
 folio-admin config set KEY VAL   # Set a setting
 folio-admin config export FILE   # Export all settings as a shell script
+folio-admin rebuild-index        # Drop and rebuild the FTS5 search index
 ```
 
 ## Configuration reference

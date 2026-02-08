@@ -1,4 +1,4 @@
-.PHONY: help sync install init-db run rundev check clean config-list config-set config-export
+.PHONY: help sync install init-db rebuild-index run rundev check clean config-list config-set config-export
 
 SHELL := /bin/bash
 VENV_DIR := $(or $(VIRTUAL_ENV),.venv)
@@ -18,6 +18,7 @@ help:
 	@echo "config-list  - Show all config settings"
 	@echo "config-set KEY=key VAL=value  - Set a config value"
 	@echo "config-export FILE=path  - Export all settings as a shell script"
+	@echo "rebuild-index  - Drop and rebuild the full-text search index"
 	@echo "check    - Run ruff and ty for code quality"
 	@echo "clean    - Remove temporary files and database"
 	@echo ""
@@ -32,6 +33,9 @@ install: sync
 
 init-db:
 	@$(ADMIN) init-db
+
+rebuild-index:
+	@$(ADMIN) rebuild-index
 
 run:
 	@$(WEB)

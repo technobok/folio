@@ -17,6 +17,13 @@ from folio.db import (
 )
 
 
+def _make_app():
+    """Create a Flask app for commands that need app context."""
+    from folio import create_app
+
+    return create_app()
+
+
 def _db_get(key: str) -> str | None:
     db = get_standalone_db()
     row = db.execute("SELECT value FROM app_setting WHERE key = ?", (key,)).fetchone()
@@ -171,3 +178,14 @@ def init_db_command():
     db_path = get_db_path()
     init_db_at(db_path)
     click.echo(f"Database initialized at {db_path}")
+
+
+@main.command("rebuild-index")
+def rebuild_index_command():
+    """Drop and rebuild the full-text search index."""
+    app = _make_app()
+    with app.app_context():
+        from folio.services import search_service
+
+        count = search_service.rebuild_index()
+        click.echo(f"Rebuilt FTS index: {count} documents indexed.")
