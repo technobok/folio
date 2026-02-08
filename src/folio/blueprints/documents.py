@@ -628,7 +628,7 @@ def search():
     date_to = request.args.get("date_to", "").strip() or None
 
     results: list[dict] = []
-    if query:
+    if query or mime_type or tag or date_from or date_to:
         results = search_service.search(
             query, mime_type=mime_type, tag=tag, date_from=date_from, date_to=date_to
         )

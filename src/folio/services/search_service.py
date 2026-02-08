@@ -106,18 +106,28 @@ def search(
     Returns list of dicts with id, title, snippet, etc.
     """
     db = get_db()
-    # Quote each term to avoid FTS5 syntax errors from special characters
-    safe_query = " ".join(f'"{term}"' for term in query.split())
 
-    sql = (
-        "SELECT d.id, d.slug, d.title, d.mime_type, d.updated_at, "
-        "snippet(document_fts, 1, '<mark>', '</mark>', '...', 40) as snippet "
-        "FROM document_fts fts "
-        "JOIN document d ON d.id = fts.rowid "
-    )
+    has_query = bool(query and query.strip())
 
-    conditions = ["document_fts MATCH ?", "d.slug NOT LIKE '%/.%'"]
-    params: list[str | int] = [safe_query]
+    if has_query:
+        # Quote each term to avoid FTS5 syntax errors from special characters
+        safe_query = " ".join(f'"{term}"' for term in query.split())
+        sql = (
+            "SELECT d.id, d.slug, d.title, d.mime_type, d.updated_at, "
+            "snippet(document_fts, 1, '<mark>', '</mark>', '...', 40) as snippet "
+            "FROM document_fts fts "
+            "JOIN document d ON d.id = fts.rowid "
+        )
+        conditions = ["document_fts MATCH ?", "d.slug NOT LIKE '%/.%'"]
+        params: list[str | int] = [safe_query]
+    else:
+        sql = (
+            "SELECT d.id, d.slug, d.title, d.mime_type, d.updated_at, "
+            "'' as snippet "
+            "FROM document d "
+        )
+        conditions = ["d.slug NOT LIKE '%/.%'"]
+        params: list[str | int] = []
 
     if mime_type == "markdown":
         conditions.append("d.mime_type = 'text/markdown'")
@@ -138,7 +148,7 @@ def search(
         params.append(date_to + "T23:59:59")
 
     sql += "WHERE " + " AND ".join(conditions)
-    sql += " ORDER BY rank LIMIT ?"
+    sql += (" ORDER BY rank" if has_query else " ORDER BY d.updated_at DESC") + " LIMIT ?"
     params.append(limit)
 
     rows = db.execute(sql, params).fetchall()
