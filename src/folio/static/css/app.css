@@ -707,25 +707,219 @@ footer small {
     border-radius: var(--pico-border-radius);
 }
 
-/* ---- Tags tom-select ---- */
+/* ---- Tom Select - PicoCSS Theme ---- */
+
+.ts-wrapper {
+    margin-bottom: 0;
+}
+
+.ts-wrapper.single .ts-control,
+.ts-wrapper.multi .ts-control {
+    background-color: var(--pico-form-element-background-color) !important;
+    border: var(--pico-border-width) solid var(--pico-form-element-border-color) !important;
+    border-radius: var(--pico-border-radius);
+    padding: var(--pico-form-element-spacing-vertical) var(--pico-form-element-spacing-horizontal);
+    min-height: calc(1rem * var(--pico-line-height) + var(--pico-form-element-spacing-vertical) * 2 + var(--pico-border-width) * 2);
+    color: var(--pico-form-element-color);
+    font-size: var(--pico-font-size);
+    line-height: var(--pico-line-height);
+    box-shadow: none !important;
+    transition: background-color var(--pico-transition), border-color var(--pico-transition), box-shadow var(--pico-transition);
+}
+
+.ts-wrapper.focus .ts-control {
+    border-color: var(--pico-form-element-active-border-color) !important;
+    box-shadow: 0 0 0 var(--pico-outline-width) var(--pico-form-element-focus-color) !important;
+    background-color: var(--pico-form-element-background-color) !important;
+}
+
+.ts-control > input,
+.ts-control > input:focus {
+    color: var(--pico-form-element-color) !important;
+    font-size: var(--pico-font-size) !important;
+    background: transparent !important;
+}
+
+.ts-control > input::placeholder {
+    color: var(--pico-form-element-placeholder-color) !important;
+    opacity: 1;
+}
+
+/* Dropdown */
+.ts-dropdown,
+.ts-dropdown.single,
+.ts-dropdown.multi {
+    background-color: var(--pico-form-element-background-color) !important;
+    border: var(--pico-border-width) solid var(--pico-form-element-border-color) !important;
+    border-top: none !important;
+    border-radius: 0 0 var(--pico-border-radius) var(--pico-border-radius);
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.15);
+    margin-top: 0;
+    color: var(--pico-color);
+}
+
+.ts-dropdown .ts-dropdown-content {
+    background-color: var(--pico-form-element-background-color);
+}
+
+.ts-dropdown .option,
+.ts-dropdown .optgroup-header,
+.ts-dropdown .no-results,
+.ts-dropdown .create {
+    padding: var(--pico-form-element-spacing-vertical) var(--pico-form-element-spacing-horizontal);
+    color: var(--pico-color) !important;
+    background-color: transparent;
+}
+
+.ts-dropdown [data-selectable].option {
+    opacity: 1;
+    cursor: pointer;
+}
+
+.ts-dropdown .option.active,
+.ts-dropdown .option:hover {
+    background-color: var(--pico-primary-background) !important;
+    color: var(--pico-primary-inverse) !important;
+}
+
+/* Disabled state */
+.ts-wrapper.disabled .ts-control {
+    background-color: var(--pico-form-element-disabled-background-color) !important;
+    opacity: var(--pico-form-element-disabled-opacity);
+}
+
+/* Multi-select items */
+.ts-wrapper.multi .ts-control > div {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    height: auto;
+    min-height: 1.5rem;
+    background-color: var(--pico-secondary-background);
+    color: var(--pico-secondary-inverse);
+    border-radius: var(--pico-border-radius);
+    padding: 0.5rem 0.75rem !important;
+    margin: 0.15rem 0.25rem 0.15rem 0;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.ts-wrapper.plugin-remove_button .ts-control > div {
+    padding-right: 0.75rem !important;
+}
+
+.ts-wrapper.multi .ts-control > div.active {
+    background-color: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+}
+
+/* Remove button inside badge */
+.ts-wrapper.multi .ts-control > div .remove,
+.ts-wrapper.plugin-remove_button .ts-control > div .remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.5rem;
+    padding: 0;
+    border: none !important;
+    border-left: none !important;
+    background: transparent;
+    color: inherit;
+    font-size: 1.1rem;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+
+.ts-wrapper.multi .ts-control > div .remove:hover {
+    opacity: 1;
+    background: transparent;
+}
+
+/* Hide the original select when Tom Select is active */
+.ts-wrapper + select,
+select.tomselected {
+    display: none !important;
+}
+
+/* Create tag option styling */
+.ts-dropdown .option.create {
+    color: var(--pico-primary);
+}
+
+/* ---- Tags section ---- */
 
 #tags-section {
     margin-bottom: 1rem;
 }
 
-#tags-section .ts-control {
-    border: 1px solid var(--pico-muted-border-color);
-    background: var(--pico-card-background-color);
-    min-height: 2rem;
+.tags-control {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    width: 100%;
 }
 
-#tags-section .ts-dropdown {
-    background: var(--pico-card-background-color);
-    border: 1px solid var(--pico-muted-border-color);
+.tags-control .ts-wrapper {
+    margin-bottom: 0;
+    width: 100%;
 }
 
-#tags-section .ts-dropdown .active {
-    background: var(--pico-primary-focus);
+.tags-control .ts-wrapper.multi .ts-control {
+    min-height: 2.5rem;
+    padding: 0.25rem 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: flex-start;
+}
+
+.tags-control .ts-wrapper.multi .ts-control > input {
+    flex: 1 1 auto;
+    min-width: 100px;
+    width: auto !important;
+}
+
+/* Tag badges in Tom Select */
+.tags-control .ts-wrapper.multi .ts-control > .tag-badge,
+#tags-section .ts-wrapper.multi .ts-control > .tag-badge,
+.ts-wrapper.multi .ts-control > .tag-badge {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    height: auto;
+    min-height: 1.5rem;
+    padding: 0.25rem 0.5rem !important;
+    margin: 0.15rem 0.25rem 0.15rem 0;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+/* Remove button inside tag badge */
+.ts-wrapper.multi .ts-control > .tag-badge .remove,
+.ts-wrapper.plugin-remove_button .ts-control > .tag-badge .remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.5rem;
+    padding: 0;
+    border: none !important;
+    border-left: none !important;
+    background: transparent;
+    color: inherit;
+    font-size: 1.1rem;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+
+.ts-wrapper.multi .ts-control > .tag-badge .remove:hover {
+    opacity: 1;
+    background: transparent;
 }
 
 .document-view.reader-mode #tags-section {
