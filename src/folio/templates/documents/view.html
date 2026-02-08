@@ -2,6 +2,12 @@
 
 {% block title %}{{ document.title }} - Folio{% endblock %}
 
+{% block head %}
+{% if document.is_markdown %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.25.0/tocbot.css">
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="document-view reader-mode">
     <!-- Breadcrumbs + reader toggle -->
@@ -57,17 +63,11 @@
     {% endif %}
 
     <!-- Document layout with TOC -->
-    <div class="document-layout{% if toc_items %} has-toc{% endif %}">
-        {% if toc_items %}
-        <aside class="document-toc">
+    <div class="document-layout{% if document.is_markdown %} has-toc{% endif %}">
+        {% if document.is_markdown %}
+        <aside class="document-toc" id="toc-aside">
             <strong>Contents</strong>
-            <ul>
-                {% for item in toc_items %}
-                <li style="padding-left: {{ (item.level - 1) * 0.75 }}rem">
-                    <a href="#{{ item.anchor }}">{{ item.title }}</a>
-                </li>
-                {% endfor %}
-            </ul>
+            <nav id="toc"></nav>
         </aside>
         {% endif %}
 
@@ -115,6 +115,9 @@
 {% endblock %}
 
 {% block scripts %}
+{% if document.is_markdown %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.25.0/tocbot.min.js"></script>
+{% endif %}
 <script>
 (function() {
     var toggle = document.getElementById('reader-toggle');
@@ -133,6 +136,25 @@
             localStorage.setItem('folio-reader-mode', 'false');
         }
     });
+
+    // Initialize tocbot for markdown documents
+    if (typeof tocbot !== 'undefined') {
+        tocbot.init({
+            tocSelector: '#toc',
+            contentSelector: '.markdown-content',
+            headingSelector: 'h2, h3, h4',
+            collapseDepth: 6,
+            orderedList: false,
+        });
+        // Hide TOC sidebar if no headings were found
+        var tocEl = document.getElementById('toc');
+        if (tocEl && !tocEl.querySelector('.toc-list')) {
+            var aside = document.getElementById('toc-aside');
+            if (aside) aside.style.display = 'none';
+            var layout = document.querySelector('.document-layout');
+            if (layout) layout.classList.remove('has-toc');
+        }
+    }
 })();
 </script>
 {% endblock %}

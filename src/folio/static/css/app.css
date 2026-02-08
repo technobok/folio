@@ -337,23 +337,33 @@ footer small {
     order: 2;
 }
 
-.document-toc ul {
+.document-toc .toc-list {
     list-style: none;
     padding: 0;
     margin: 0.5rem 0;
 }
 
-.document-toc li {
+.document-toc .toc-list .toc-list {
+    padding-left: 0.75rem;
+    margin: 0;
+}
+
+.document-toc .toc-list-item {
     margin: 0.25rem 0;
 }
 
-.document-toc a {
+.document-toc .toc-link {
     color: var(--pico-muted-color);
     text-decoration: none;
 }
 
-.document-toc a:hover {
+.document-toc .toc-link:hover {
     color: var(--pico-primary);
+}
+
+.document-toc .is-active-link {
+    color: var(--pico-primary);
+    font-weight: 600;
 }
 
 .document-content {

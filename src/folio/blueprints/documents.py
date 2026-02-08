@@ -2,7 +2,6 @@
 
 import hashlib
 import io
-import re
 
 from flask import (
     Blueprint,
@@ -243,11 +242,6 @@ def view(slug: str):
     tags = Tag.get_for_document(doc.id)
     attachments = Document.list_attachments(doc.slug)
 
-    # Generate TOC from headings if markdown
-    toc_items: list[dict] = []
-    if doc.is_markdown and doc.current_content:
-        toc_items = _extract_toc(doc.current_content)
-
     return render_template(
         "documents/view.html",
         document=doc,
@@ -255,22 +249,7 @@ def view(slug: str):
         version_count=version_count,
         tags=tags,
         attachments=attachments,
-        toc_items=toc_items,
     )
-
-
-def _extract_toc(markdown_text: str) -> list[dict]:
-    """Extract headings from markdown for table of contents."""
-    toc: list[dict] = []
-    for line in markdown_text.splitlines():
-        match = re.match(r"^(#{1,6})\s+(.+)$", line)
-        if match:
-            level = len(match.group(1))
-            title = match.group(2).strip()
-            anchor = re.sub(r"[^\w\s-]", "", title.lower())
-            anchor = re.sub(r"[-\s]+", "-", anchor).strip("-")
-            toc.append({"level": level, "title": title, "anchor": anchor})
-    return toc
 
 
 # ---------------------------------------------------------------------------

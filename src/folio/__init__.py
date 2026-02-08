@@ -7,7 +7,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import apsw
-import mistune
+import markdown
 from flask import Flask, render_template, request
 from markupsafe import Markup
 
@@ -104,17 +104,15 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
         except Exception:
             return iso_string[:16].replace("T", " ") if iso_string else ""
 
-    # Markdown renderer for document display (GFM plugins)
-    md = mistune.create_markdown(
-        escape=True,
-        plugins=["strikethrough", "table", "task_lists", "url"],
-    )
+    # Markdown renderer for document display
+    md = markdown.Markdown(extensions=["toc", "tables", "fenced_code", "sane_lists"])
 
     @app.template_filter("markdown")
     def markdown_filter(text: str | None) -> Markup:
         if not text:
             return Markup("")
-        html = str(md(text)).strip()
+        md.reset()
+        html = md.convert(text).strip()
         if html.startswith("<p>") and html.endswith("</p>") and html.count("<p>") == 1:
             html = html[3:-4]
         return Markup(html)
@@ -123,7 +121,8 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     def markdown_block_filter(text: str | None) -> Markup:
         if not text:
             return Markup("")
-        return Markup(str(md(text)))
+        md.reset()
+        return Markup(md.convert(text))
 
     @app.template_filter("filesize")
     def filesize_filter(size_bytes: int) -> str:
