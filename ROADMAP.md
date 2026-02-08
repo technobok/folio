@@ -33,10 +33,10 @@ Core document management, delivered and working.
 Extend search to cover binary documents and improve the search experience.
 
 - [x] Binary document upload with type detection and inline preview (image, PDF, video, audio)
-- [ ] Text extraction pipeline: PyMuPDF (PDF), python-docx (Word), openpyxl (Excel), email.parser (email)
-- [ ] Index extracted text in FTS5 alongside markdown content
-- [ ] Search result snippets with keyword highlighting (needs content-backed FTS table)
-- [ ] Faceted search filtering by type/tag/date
+- [x] Text extraction pipeline: PyMuPDF (PDF), python-docx (Word), openpyxl (Excel), email.parser (email)
+- [x] Index extracted text in FTS5 alongside markdown content
+- [x] Search result snippets with keyword highlighting (content-backed FTS table)
+- [x] Faceted search filtering by type/tag/date
 - [x] Search result ranking via FTS5 relevance ordering
 
 ### Phase 3 - Organisation and Collaboration
