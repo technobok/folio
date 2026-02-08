@@ -326,8 +326,9 @@ def upload_attachment(slug: str):
     username = get_username()
     attachment = blob_service.save_uploaded_file(file, doc.id, username)
 
-    # Return JSON for Vditor image upload callback
-    if is_htmx_request() or request.content_type == "multipart/form-data":
+    # Return JSON for Vditor image upload callback (XHR from editor)
+    is_xhr = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    if is_htmx_request() or is_xhr:
         image_url = url_for("documents.serve_attachment", attachment_id=attachment.id)
         return {
             "msg": "",
