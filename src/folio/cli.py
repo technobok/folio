@@ -189,3 +189,17 @@ def rebuild_index_command():
 
         count = search_service.rebuild_index()
         click.echo(f"Rebuilt FTS index: {count} documents indexed.")
+
+
+@main.command("migrate-attachments")
+def migrate_attachments_command():
+    """Migrate attachment rows to document-based attachments (one-time)."""
+    app = _make_app()
+    with app.app_context():
+        from folio.services import migration_service
+
+        count = migration_service.migrate_attachments()
+        if count:
+            click.echo(f"Migrated {count} attachments to documents.")
+        else:
+            click.echo("No attachments to migrate.")

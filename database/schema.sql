@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS db_metadata (
     value TEXT NOT NULL
 );
 
-INSERT OR IGNORE INTO db_metadata (key, value) VALUES ('schema_version', '1');
+INSERT OR IGNORE INTO db_metadata (key, value) VALUES ('schema_version', '2');
 
 -- Application settings
 CREATE TABLE IF NOT EXISTS app_setting (
@@ -69,20 +69,6 @@ CREATE TABLE IF NOT EXISTS document_blob (
     FOREIGN KEY (document_id) REFERENCES document(id) ON DELETE CASCADE,
     FOREIGN KEY (blob_id) REFERENCES file_blob(id) ON DELETE RESTRICT
 );
-
--- Image/attachment uploads (referenced from markdown content)
-CREATE TABLE IF NOT EXISTS attachment (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    document_id INTEGER NOT NULL,
-    blob_id INTEGER NOT NULL,
-    filename TEXT NOT NULL,
-    uploaded_by TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    FOREIGN KEY (document_id) REFERENCES document(id) ON DELETE CASCADE,
-    FOREIGN KEY (blob_id) REFERENCES file_blob(id) ON DELETE RESTRICT
-);
-
-CREATE INDEX IF NOT EXISTS idx_attachment_document ON attachment(document_id);
 
 -- Tags
 CREATE TABLE IF NOT EXISTS tag (

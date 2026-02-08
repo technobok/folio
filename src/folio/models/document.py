@@ -1,12 +1,27 @@
 """Document model."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from folio.models.file_blob import FileBlob
 
 from slugify import slugify
 
 from folio.db import get_db, transaction
+
+
+def is_hidden_slug(slug: str) -> bool:
+    """Return True if any path component starts with '.'."""
+    return any(part.startswith(".") for part in slug.split("/"))
+
+
+def attachment_slug(parent_slug: str, filename: str) -> str:
+    """Build an attachment slug: {parent_slug}/.att/{filename}."""
+    return f"{parent_slug}/.att/{filename}"
 
 
 @dataclass
@@ -130,6 +145,7 @@ class Document:
         prefix: str = "",
         limit: int = 100,
         offset: int = 0,
+        include_hidden: bool = False,
     ) -> list[Document]:
         db = get_db()
         if prefix:
@@ -145,23 +161,28 @@ class Document:
                 "ORDER BY updated_at DESC LIMIT ? OFFSET ?",
                 (limit, offset),
             ).fetchall()
-        return [Document._from_row(row) for row in rows]
+        docs = [Document._from_row(row) for row in rows]
+        if not include_hidden:
+            docs = [d for d in docs if not is_hidden_slug(d.slug)]
+        return docs
 
     @staticmethod
-    def count(prefix: str = "") -> int:
+    def count(prefix: str = "", include_hidden: bool = False) -> int:
         db = get_db()
+        hidden_filter = "" if include_hidden else " AND slug NOT LIKE '%/.%'"
         if prefix:
             prefix = prefix.strip("/")
             row = db.execute(
-                "SELECT COUNT(*) FROM document WHERE slug LIKE ? || '%'",
+                f"SELECT COUNT(*) FROM document WHERE slug LIKE ? || '%'{hidden_filter}",
                 (prefix + "/",),
             ).fetchone()
         else:
-            row = db.execute("SELECT COUNT(*) FROM document").fetchone()
+            where = "" if include_hidden else " WHERE slug NOT LIKE '%/.%'"
+            row = db.execute(f"SELECT COUNT(*) FROM document{where}").fetchone()
         return int(row[0]) if row else 0
 
     @staticmethod
-    def list_folders(prefix: str = "") -> list[str]:
+    def list_folders(prefix: str = "", include_hidden: bool = False) -> list[str]:
         """List virtual folder names under a prefix."""
         db = get_db()
         if prefix:
@@ -177,12 +198,39 @@ class Document:
             remainder = str(slug_val)[len(prefix) :]
             if "/" in remainder:
                 folder = remainder.split("/")[0]
+                if not include_hidden and folder.startswith("."):
+                    continue
                 folders.add(folder)
         return sorted(folders)
 
     @property
     def is_markdown(self) -> bool:
         return self.mime_type == "text/markdown"
+
+    @staticmethod
+    def list_attachments(parent_slug: str) -> list[Document]:
+        """List attachment documents under {parent_slug}/.att/."""
+        db = get_db()
+        att_prefix = f"{parent_slug}/.att/"
+        rows = db.execute(
+            f"SELECT {Document._COLUMNS} FROM document WHERE slug LIKE ? ORDER BY created_at ASC",
+            (att_prefix + "%",),
+        ).fetchall()
+        return [Document._from_row(row) for row in rows]
+
+    def get_blob(self) -> FileBlob | None:
+        """Return the FileBlob linked via document_blob, or None."""
+        from folio.models.file_blob import FileBlob
+
+        db = get_db()
+        row = db.execute(
+            "SELECT fb.id, fb.sha256_hash, fb.file_size, fb.mime_type, fb.created_at "
+            "FROM document_blob db "
+            "JOIN file_blob fb ON fb.id = db.blob_id "
+            "WHERE db.document_id = ?",
+            (self.id,),
+        ).fetchone()
+        return FileBlob._from_row(row) if row else None
 
     @property
     def breadcrumbs(self) -> list[tuple[str, str]]:

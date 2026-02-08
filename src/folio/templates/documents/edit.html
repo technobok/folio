@@ -41,8 +41,8 @@
         <tbody>
         {% for att in attachments %}
         <tr>
-            <td><a href="{{ url_for('documents.serve_attachment', attachment_id=att.id) }}">{{ att.filename }}</a></td>
-            <td><code>![{{ att.filename }}]({{ url_for('documents.serve_attachment', attachment_id=att.id) }})</code></td>
+            <td><a href="{{ url_for('documents.view', slug=att.slug) }}">{{ att.title }}</a></td>
+            <td><code>![{{ att.title }}]({{ url_for('documents.view', slug=att.slug) }})</code></td>
         </tr>
         {% endfor %}
         </tbody>

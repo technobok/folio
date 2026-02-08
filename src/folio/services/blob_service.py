@@ -6,7 +6,9 @@ from pathlib import Path
 from flask import current_app
 from werkzeug.datastructures import FileStorage
 
-from folio.models.attachment import Attachment, FileBlob
+from folio.db import get_db, transaction
+from folio.models.document import Document, attachment_slug
+from folio.models.file_blob import FileBlob
 
 
 def get_blob_path(sha256_hash: str) -> Path:
@@ -15,16 +17,43 @@ def get_blob_path(sha256_hash: str) -> Path:
     return blobs_dir / sha256_hash[:2] / sha256_hash
 
 
+def _unique_attachment_slug(parent_slug: str, filename: str) -> str:
+    """Build an attachment slug, appending a counter on collision.
+
+    Preserves the file extension when adding a counter, e.g.
+    ``photo.png`` → ``photo-2.png``.
+    """
+    base_slug = attachment_slug(parent_slug, filename)
+    db = get_db()
+    slug = base_slug
+    counter = 2
+    while db.execute("SELECT 1 FROM document WHERE slug = ?", (slug,)).fetchone():
+        # Split filename to preserve extension
+        dot_pos = filename.rfind(".")
+        if dot_pos > 0:
+            name_part = filename[:dot_pos]
+            ext_part = filename[dot_pos:]
+            slug = attachment_slug(parent_slug, f"{name_part}-{counter}{ext_part}")
+        else:
+            slug = f"{base_slug}-{counter}"
+        counter += 1
+    return slug
+
+
 def save_uploaded_file(
     file: FileStorage,
-    document_id: int,
+    parent_doc: Document,
     uploaded_by: str,
-) -> Attachment:
-    """Save an uploaded file with deduplication. Returns the created Attachment."""
+) -> Document:
+    """Save an uploaded file as a document with blob deduplication.
+
+    Returns the created (or updated) attachment Document.
+    """
     content = file.read()
     sha256_hash = hashlib.sha256(content).hexdigest()
     file_size = len(content)
     mime_type = file.content_type or "application/octet-stream"
+    filename = file.filename or "unnamed"
 
     blob, created = FileBlob.get_or_create(sha256_hash, file_size, mime_type)
 
@@ -33,15 +62,38 @@ def save_uploaded_file(
         blob_path.parent.mkdir(parents=True, exist_ok=True)
         blob_path.write_bytes(content)
 
-    filename = file.filename or "unnamed"
-    attachment = Attachment.create(
-        document_id=document_id,
-        blob_id=blob.id,
-        filename=filename,
-        uploaded_by=uploaded_by,
+    # Check if a document with this exact slug already exists (re-upload)
+    exact_slug = attachment_slug(parent_doc.slug, filename)
+    existing = Document.get_by_slug(exact_slug)
+
+    if existing:
+        # Update the blob link for the existing attachment document
+        with transaction() as cursor:
+            cursor.execute("DELETE FROM document_blob WHERE document_id = ?", (existing.id,))
+            cursor.execute(
+                "INSERT INTO document_blob (document_id, blob_id) VALUES (?, ?)",
+                (existing.id, blob.id),
+            )
+        existing.update(mime_type=mime_type)
+        return existing
+
+    # Create a new attachment document
+    slug = _unique_attachment_slug(parent_doc.slug, filename)
+    doc = Document.create(
+        title=filename,
+        created_by=uploaded_by,
+        content=None,
+        mime_type=mime_type,
+        slug=slug,
     )
 
-    return attachment
+    with transaction() as cursor:
+        cursor.execute(
+            "INSERT INTO document_blob (document_id, blob_id) VALUES (?, ?)",
+            (doc.id, blob.id),
+        )
+
+    return doc
 
 
 def get_blob_content(blob: FileBlob) -> bytes | None:
@@ -52,23 +104,24 @@ def get_blob_content(blob: FileBlob) -> bytes | None:
     return None
 
 
-def delete_attachment(attachment: Attachment) -> None:
-    """Delete an attachment. Only deletes the blob file if no other attachments reference it."""
-    blob = attachment.get_blob()
-    attachment.delete()
+def delete_binary_document(doc: Document) -> None:
+    """Delete a binary document and clean up its blob if unreferenced."""
+    blob = doc.get_blob()
+    doc.delete()  # CASCADE removes document_blob row
 
     if blob:
-        from folio.db import get_db
-
         db = get_db()
-        row = db.execute("SELECT COUNT(*) FROM attachment WHERE blob_id = ?", (blob.id,)).fetchone()
+        row = db.execute(
+            "SELECT COUNT(*) FROM document_blob WHERE blob_id = ?", (blob.id,)
+        ).fetchone()
         count = int(row[0]) if row else 0
 
         if count == 0:
             blob_path = get_blob_path(blob.sha256_hash)
             if blob_path.exists():
                 blob_path.unlink()
-            db.execute("DELETE FROM file_blob WHERE id = ?", (blob.id,))
+            with transaction() as cursor:
+                cursor.execute("DELETE FROM file_blob WHERE id = ?", (blob.id,))
 
 
 def format_file_size(size_bytes: int) -> str:

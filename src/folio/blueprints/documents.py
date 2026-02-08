@@ -17,7 +17,6 @@ from flask import (
 from markupsafe import Markup
 
 from folio.blueprints.auth import get_username, login_required
-from folio.models.attachment import Attachment
 from folio.models.document import Document
 from folio.models.document_version import DocumentVersion
 from folio.models.tag import Tag
@@ -131,12 +130,26 @@ def new():
 @bp.route("/view/<path:slug>")
 @login_required
 def view(slug: str):
-    """View a document (rendered markdown or download link for binary)."""
+    """View a document (rendered markdown or serve binary)."""
     doc = _get_doc_or_404(slug)
+
+    # Binary document — serve the blob content directly
+    blob = doc.get_blob()
+    if blob:
+        content = blob_service.get_blob_content(blob)
+        if content is None:
+            abort(404)
+        assert content is not None
+        return send_file(
+            io.BytesIO(content),
+            mimetype=blob.mime_type,
+            as_attachment=False,
+            download_name=doc.title,
+        )
 
     version_count = DocumentVersion.count_for_document(doc.id)
     tags = Tag.get_for_document(doc.id)
-    attachments = Attachment.list_for_document(doc.id)
+    attachments = Document.list_attachments(doc.slug)
 
     # Generate TOC from headings if markdown
     toc_items: list[dict] = []
@@ -215,7 +228,7 @@ def edit(slug: str):
 
         return redirect(url_for("documents.view", slug=doc.slug))
 
-    attachments = Attachment.list_for_document(doc.id)
+    attachments = Document.list_attachments(doc.slug)
     return render_template("documents/edit.html", document=doc, attachments=attachments)
 
 
@@ -289,8 +302,13 @@ def diff(slug: str):
 @bp.route("/delete/<path:slug>", methods=["POST"])
 @login_required
 def delete(slug: str):
-    """Delete a document."""
+    """Delete a document and its attachment children."""
     doc = _get_doc_or_404(slug)
+
+    # Delete attachment children first (no FK cascade from child slug to parent)
+    for att_doc in Document.list_attachments(doc.slug):
+        blob_service.delete_binary_document(att_doc)
+
     search_service.remove_from_index(doc.id, doc.title, doc.current_content or "")
     doc.delete()
     flash("Document deleted.", "success")
@@ -325,19 +343,19 @@ def upload_attachment(slug: str):
     file.seek(0)
 
     username = get_username()
-    attachment = blob_service.save_uploaded_file(file, doc.id, username)
+    att_doc = blob_service.save_uploaded_file(file, doc, username)
 
     # Return JSON for Vditor image upload callback (XHR from editor)
     is_xhr = request.headers.get("X-Requested-With") == "XMLHttpRequest"
     if is_htmx_request() or is_xhr:
-        image_url = url_for("documents.serve_attachment", attachment_id=attachment.id)
+        image_url = url_for("documents.view", slug=att_doc.slug)
         return {
             "msg": "",
             "code": 0,
             "data": {
                 "errFiles": [],
                 "succMap": {
-                    attachment.filename: image_url,
+                    att_doc.title: image_url,
                 },
             },
         }
@@ -349,28 +367,25 @@ def upload_attachment(slug: str):
 @bp.route("/attachment/<int:attachment_id>")
 @login_required
 def serve_attachment(attachment_id: int):
-    """Serve an attachment file."""
-    att = Attachment.get_by_id(attachment_id)
-    if not att:
-        abort(404)
-    assert att is not None
+    """Backward-compat redirect for old attachment URLs."""
+    from folio.db import get_db
 
-    blob = att.get_blob()
-    if not blob:
-        abort(404)
-    assert blob is not None
-
-    content = blob_service.get_blob_content(blob)
-    if content is None:
-        abort(404)
-    assert content is not None
-
-    return send_file(
-        io.BytesIO(content),
-        mimetype=blob.mime_type,
-        as_attachment=False,
-        download_name=att.filename,
-    )
+    db = get_db()
+    # Look up the old attachment row to find its parent doc and filename,
+    # then redirect to the new document-based URL.
+    row = db.execute(
+        "SELECT a.filename, d.slug FROM attachment a "
+        "JOIN document d ON d.id = a.document_id "
+        "WHERE a.id = ?",
+        (attachment_id,),
+    ).fetchone()
+    if row:
+        filename, parent_slug = str(row[0]), str(row[1])
+        new_slug = f"{parent_slug}/.att/{filename}"
+        new_doc = Document.get_by_slug(new_slug)
+        if new_doc:
+            return redirect(url_for("documents.view", slug=new_doc.slug), code=301)
+    abort(404)
 
 
 # ---------------------------------------------------------------------------

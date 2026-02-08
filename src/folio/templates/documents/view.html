@@ -80,8 +80,8 @@
         <ul>
             {% for att in attachments %}
             <li>
-                <a href="{{ url_for('documents.serve_attachment', attachment_id=att.id) }}">{{ att.filename }}</a>
-                <small class="attachment-meta">uploaded by {{ att.uploaded_by }} on {{ att.created_at | localdate }}</small>
+                <a href="{{ url_for('documents.view', slug=att.slug) }}">{{ att.title }}</a>
+                <small class="attachment-meta">uploaded by {{ att.created_by }} on {{ att.created_at | localdate }}</small>
             </li>
             {% endfor %}
         </ul>

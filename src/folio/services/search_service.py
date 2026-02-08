@@ -63,6 +63,7 @@ def rebuild_index() -> int:
     """Drop and rebuild the entire FTS index from the document table.
 
     Returns the number of documents indexed.
+    Hidden-slug documents (attachments) are excluded.
     """
     db = get_db()
     db.execute("DROP TABLE IF EXISTS document_fts")
@@ -70,7 +71,9 @@ def rebuild_index() -> int:
         "CREATE VIRTUAL TABLE document_fts USING fts5("
         "title, content_text, tags_text, content='', tokenize='porter unicode61')"
     )
-    rows = db.execute("SELECT id, title, current_content FROM document").fetchall()
+    rows = db.execute(
+        "SELECT id, title, current_content FROM document WHERE slug NOT LIKE '%/.%'"
+    ).fetchall()
     for row in rows:
         doc_id = int(row[0] or 0)
         title = str(row[1]) if row[1] else ""
@@ -92,7 +95,7 @@ def search(query: str, limit: int = 50) -> list[dict]:
         "snippet(document_fts, 1, '<mark>', '</mark>', '...', 40) as snippet "
         "FROM document_fts fts "
         "JOIN document d ON d.id = fts.rowid "
-        "WHERE document_fts MATCH ? "
+        "WHERE document_fts MATCH ? AND d.slug NOT LIKE '%/.%' "
         "ORDER BY rank LIMIT ?",
         (safe_query, limit),
     ).fetchall()
