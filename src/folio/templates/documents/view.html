@@ -25,6 +25,9 @@
                 {% if version_count > 0 %}
                 &middot; {{ version_count }} version{{ 's' if version_count != 1 }}
                 {% endif %}
+                {% if blob %}
+                &middot; {{ blob.mime_type }} &middot; {{ blob.file_size | filesize }}
+                {% endif %}
             </p>
         </hgroup>
     </header>
@@ -33,6 +36,9 @@
     <div class="doc-toolbar">
         {% if document.is_markdown %}
         <button type="button" onclick="location.href='{{ url_for('documents.edit', slug=document.slug) }}'" class="outline">Edit</button>
+        {% endif %}
+        {% if blob %}
+        <button type="button" onclick="location.href='{{ url_for('documents.raw', slug=document.slug) }}'" class="outline">Download</button>
         {% endif %}
         <button type="button" onclick="location.href='{{ url_for('documents.history', slug=document.slug) }}'" class="outline secondary">History</button>
         <form method="post" action="{{ url_for('documents.delete', slug=document.slug) }}" style="display:inline"
@@ -70,8 +76,23 @@
             <div class="markdown-content">
                 {{ document.current_content | markdown_block }}
             </div>
-            {% else %}
-            <p>Binary document ({{ document.mime_type }})</p>
+            {% elif blob %}
+            <div class="binary-preview">
+                {% if blob.mime_type.startswith('image/') %}
+                <img src="{{ url_for('documents.raw', slug=document.slug) }}" alt="{{ document.title }}">
+                {% elif blob.mime_type == 'application/pdf' %}
+                <iframe src="{{ url_for('documents.raw', slug=document.slug) }}"></iframe>
+                {% elif blob.mime_type.startswith('video/') %}
+                <video controls src="{{ url_for('documents.raw', slug=document.slug) }}"></video>
+                {% elif blob.mime_type.startswith('audio/') %}
+                <audio controls src="{{ url_for('documents.raw', slug=document.slug) }}"></audio>
+                {% else %}
+                <div class="binary-no-preview">
+                    <p>This file cannot be previewed inline.</p>
+                    <button type="button" onclick="location.href='{{ url_for('documents.raw', slug=document.slug) }}'">Download</button>
+                </div>
+                {% endif %}
+            </div>
             {% endif %}
         </article>
     </div>
@@ -83,7 +104,7 @@
         <ul>
             {% for att in attachments %}
             <li>
-                <a href="{{ url_for('documents.view', slug=att.slug) }}">{{ att.title }}</a>
+                <a href="{{ url_for('documents.raw', slug=att.slug) }}">{{ att.title }}</a>
                 <small class="attachment-meta">uploaded by {{ att.created_by }} on {{ att.created_at | localdate }}</small>
             </li>
             {% endfor %}

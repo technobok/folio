@@ -125,6 +125,12 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             return Markup("")
         return Markup(str(md(text)))
 
+    @app.template_filter("filesize")
+    def filesize_filter(size_bytes: int) -> str:
+        from folio.services.blob_service import format_file_size
+
+        return format_file_size(size_bytes)
+
     # Register blueprints
     from folio.blueprints import admin_sql, auth, documents
 

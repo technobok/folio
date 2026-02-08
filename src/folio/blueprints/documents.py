@@ -211,25 +211,38 @@ def upload_file():
 # ---------------------------------------------------------------------------
 
 
+@bp.route("/raw/<path:slug>")
+@login_required
+def raw(slug: str):
+    """Serve raw binary content for a document."""
+    doc = _get_doc_or_404(slug)
+    blob = doc.get_blob()
+    if not blob:
+        abort(404)
+    assert blob is not None
+    content = blob_service.get_blob_content(blob)
+    if content is None:
+        abort(404)
+    assert content is not None
+    return send_file(
+        io.BytesIO(content),
+        mimetype=blob.mime_type,
+        as_attachment=False,
+        download_name=doc.title,
+    )
+
+
 @bp.route("/view/<path:slug>")
 @login_required
 def view(slug: str):
-    """View a document (rendered markdown or serve binary)."""
+    """View a document — info page for all types."""
     doc = _get_doc_or_404(slug)
 
-    # Binary document — serve the blob content directly
+    # Attachment slugs (/.att/) redirect to raw for backward compat with
+    # embedded image URLs in markdown content.
     blob = doc.get_blob()
-    if blob:
-        content = blob_service.get_blob_content(blob)
-        if content is None:
-            abort(404)
-        assert content is not None
-        return send_file(
-            io.BytesIO(content),
-            mimetype=blob.mime_type,
-            as_attachment=False,
-            download_name=doc.title,
-        )
+    if blob and "/.att/" in slug:
+        return redirect(url_for("documents.raw", slug=slug))
 
     version_count = DocumentVersion.count_for_document(doc.id)
     tags = Tag.get_for_document(doc.id)
@@ -243,6 +256,7 @@ def view(slug: str):
     return render_template(
         "documents/view.html",
         document=doc,
+        blob=blob,
         version_count=version_count,
         tags=tags,
         attachments=attachments,
@@ -432,7 +446,7 @@ def upload_attachment(slug: str):
     # Return JSON for Vditor image upload callback (XHR from editor)
     is_xhr = request.headers.get("X-Requested-With") == "XMLHttpRequest"
     if is_htmx_request() or is_xhr:
-        image_url = url_for("documents.view", slug=att_doc.slug)
+        image_url = url_for("documents.raw", slug=att_doc.slug)
         return {
             "msg": "",
             "code": 0,
@@ -468,7 +482,7 @@ def serve_attachment(attachment_id: int):
         new_slug = f"{parent_slug}/.att/{filename}"
         new_doc = Document.get_by_slug(new_slug)
         if new_doc:
-            return redirect(url_for("documents.view", slug=new_doc.slug), code=301)
+            return redirect(url_for("documents.raw", slug=new_doc.slug), code=301)
     abort(404)
 
 
