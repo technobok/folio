@@ -159,12 +159,12 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     def index():
         from flask import g
 
-        recent_docs = []
+        recent_activity: list[dict] = []
         if g.get("user"):
-            from folio.models.document import Document
+            from folio.models.document_version import DocumentVersion
 
-            recent_docs = Document.list_recent(limit=20)
-        return render_template("index.html", recent_docs=recent_docs)
+            recent_activity = DocumentVersion.list_recent_activity(limit=10)
+        return render_template("index.html", recent_activity=recent_activity)
 
     return app
 

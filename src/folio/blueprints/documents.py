@@ -83,6 +83,19 @@ def index(prefix: str = ""):
 
 
 # ---------------------------------------------------------------------------
+# Activity feed
+# ---------------------------------------------------------------------------
+
+
+@bp.route("/activity")
+@login_required
+def activity():
+    """Recent changes feed across all documents."""
+    entries = DocumentVersion.list_recent_activity(limit=50)
+    return render_template("documents/activity.html", entries=entries)
+
+
+# ---------------------------------------------------------------------------
 # Create document
 # ---------------------------------------------------------------------------
 

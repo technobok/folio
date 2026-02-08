@@ -108,6 +108,36 @@ class DocumentVersion:
         return [DocumentVersion._from_row(row) for row in rows]
 
     @staticmethod
+    def list_recent_activity(limit: int = 50) -> list[dict]:
+        """Return recent edits across all documents with document context.
+
+        Returns lightweight dicts (no full content) to avoid loading large text blobs.
+        """
+        db = get_db()
+        rows = db.execute(
+            "SELECT dv.id, dv.document_id, dv.version_number, dv.author, dv.message, "
+            "dv.created_at, d.slug, d.title "
+            "FROM document_version dv "
+            "JOIN document d ON d.id = dv.document_id "
+            "WHERE d.slug NOT LIKE '%/.%' "
+            "ORDER BY dv.created_at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [
+            {
+                "version_id": int(row[0]),
+                "document_id": int(row[1]),
+                "version_number": int(row[2]),
+                "author": str(row[3]),
+                "message": row[4] if row[4] is not None else None,
+                "created_at": str(row[5]),
+                "slug": str(row[6]),
+                "title": str(row[7]),
+            }
+            for row in rows
+        ]
+
+    @staticmethod
     def count_for_document(document_id: int) -> int:
         db = get_db()
         row = db.execute(

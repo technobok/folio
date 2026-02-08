@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Activity - Folio{% endblock %}
+
+{% block content %}
+<div class="history-page">
+    <header>
+        <hgroup>
+            <h2>Recent Activity</h2>
+            <p>Latest edits across all documents</p>
+        </hgroup>
+    </header>
+
+    {% if entries %}
+    <div class="version-timeline">
+        {% for e in entries %}
+        <div class="version-item">
+            <div class="version-header">
+                <strong>
+                    <a href="{{ url_for('documents.view', slug=e.slug) }}">{{ e.title }}</a>
+                </strong>
+                <a href="{{ url_for('documents.view_version', slug=e.slug, version_number=e.version_number) }}">
+                    v{{ e.version_number }}
+                </a>
+                <span class="version-meta">
+                    by {{ e.author }} &middot; {{ e.created_at | localdatetime }}
+                </span>
+            </div>
+            {% if e.message %}
+            <div class="version-message">{{ e.message }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="no-activity">No activity recorded yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

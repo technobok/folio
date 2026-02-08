@@ -15,29 +15,30 @@
     <button type="button" onclick="location.href='{{ url_for('documents.search') }}'" class="secondary outline">Search</button>
 </div>
 
-{% if recent_docs %}
+{% if recent_activity %}
 <section class="recent-changes">
-    <h3>Recent Changes</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Document</th>
-                <th>Type</th>
-                <th>Updated</th>
-                <th>Author</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for doc in recent_docs %}
-            <tr>
-                <td><a href="{{ url_for('documents.view', slug=doc.slug) }}">{{ doc.title }}</a></td>
-                <td><span class="type-indicator">{{ 'MD' if doc.is_markdown else 'File' }}</span></td>
-                <td>{{ doc.updated_at | localdatetime }}</td>
-                <td>{{ doc.created_by }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h3>Recent Activity</h3>
+    <div class="version-timeline">
+        {% for e in recent_activity %}
+        <div class="version-item">
+            <div class="version-header">
+                <strong>
+                    <a href="{{ url_for('documents.view', slug=e.slug) }}">{{ e.title }}</a>
+                </strong>
+                <a href="{{ url_for('documents.view_version', slug=e.slug, version_number=e.version_number) }}">
+                    v{{ e.version_number }}
+                </a>
+                <span class="version-meta">
+                    by {{ e.author }} &middot; {{ e.created_at | localdatetime }}
+                </span>
+            </div>
+            {% if e.message %}
+            <div class="version-message">{{ e.message }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    <p><a href="{{ url_for('documents.activity') }}">View all activity</a></p>
 </section>
 {% endif %}
 

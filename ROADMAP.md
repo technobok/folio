@@ -43,12 +43,12 @@ Extend search to cover binary documents and improve the search experience.
 
 Add the collaboration features that make Folio useful for teams.
 
-- [ ] Tag management UI (create, edit, delete tags; assign to documents; filter by tag)
-- [ ] Document watching (subscribe to changes on specific documents)
-- [ ] Email notifications via Outbox when watched documents change
-- [ ] Blame view (walk version history to attribute lines to authors via `difflib`)
+- [x] Tag management UI (create, edit, delete tags; assign to documents; filter by tag)
+- [x] Document watching (subscribe to changes on specific documents)
+- [x] Email notifications via Outbox when watched documents change
+- [x] Blame view (walk version history to attribute lines to authors via `difflib`)
 - [x] Document metadata display (creation date, author, version count, tags in document header)
-- [ ] Recent changes feed / activity log
+- [x] Recent changes feed / activity log
 
 ### Phase 4 - Polish and Operations
 
