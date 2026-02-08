@@ -562,6 +562,40 @@ footer small {
     background: transparent;
 }
 
+/* Side-by-side diff */
+
+.diff-sbs-table {
+    table-layout: fixed;
+}
+
+.diff-sbs-table .diff-ln {
+    width: 3rem;
+    min-width: 3rem;
+}
+
+.diff-code-sbs {
+    width: calc(50% - 3rem);
+    white-space: pre-wrap;
+    word-break: break-all;
+    border-right: 1px solid var(--pico-muted-border-color);
+}
+
+.diff-code-sbs:last-child {
+    border-right: none;
+}
+
+.diff-del-ln {
+    background-color: rgba(248, 81, 73, 0.1);
+}
+
+.diff-add-ln {
+    background-color: rgba(46, 160, 67, 0.1);
+}
+
+.diff-empty {
+    background-color: var(--pico-card-background-color);
+}
+
 .diff-form {
     margin-bottom: 1.5rem;
 }

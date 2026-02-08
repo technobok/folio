@@ -356,12 +356,15 @@ def diff(slug: str):
 
     from_v = request.args.get("from", type=int)
     to_v = request.args.get("to", type=int)
+    side_by_side = request.args.get("sbs") == "1"
 
     if not from_v or not to_v:
         flash("Please select two versions to compare.", "error")
         return redirect(url_for("documents.history", slug=slug))
 
-    diff_html = version_service.get_diff_between_versions(doc.id, from_v, to_v)
+    diff_html = version_service.get_diff_between_versions(
+        doc.id, from_v, to_v, side_by_side=side_by_side
+    )
     if diff_html is None:
         flash("One or both versions not found.", "error")
         return redirect(url_for("documents.history", slug=slug))
@@ -371,6 +374,7 @@ def diff(slug: str):
         document=doc,
         from_version=from_v,
         to_version=to_v,
+        side_by_side=side_by_side,
         diff_html=Markup(diff_html),
     )
 

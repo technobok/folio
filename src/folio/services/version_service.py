@@ -102,12 +102,100 @@ def compute_html_diff(old_content: str, new_content: str, context: int = 3) -> s
     )
 
 
-def get_diff_between_versions(document_id: int, from_version: int, to_version: int) -> str | None:
+def compute_side_by_side_diff(old_content: str, new_content: str) -> str:
+    """Compute a side-by-side full diff as an HTML table with coloured rows."""
+    old_lines = old_content.splitlines()
+    new_lines = new_content.splitlines()
+
+    matcher = difflib.SequenceMatcher(None, old_lines, new_lines)
+    rows: list[str] = []
+
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal":
+            for i, j in zip(range(i1, i2), range(j1, j2)):
+                left = escape(old_lines[i])
+                right = escape(new_lines[j])
+                rows.append(
+                    f'<tr class="diff-ctx">'
+                    f'<td class="diff-ln">{i + 1}</td>'
+                    f'<td class="diff-code-sbs">{left}</td>'
+                    f'<td class="diff-ln">{j + 1}</td>'
+                    f'<td class="diff-code-sbs">{right}</td></tr>'
+                )
+        elif tag == "replace":
+            max_len = max(i2 - i1, j2 - j1)
+            for k in range(max_len):
+                old_idx = i1 + k
+                new_idx = j1 + k
+                if old_idx < i2 and new_idx < j2:
+                    left = escape(old_lines[old_idx])
+                    right = escape(new_lines[new_idx])
+                    rows.append(
+                        f'<tr>'
+                        f'<td class="diff-ln diff-del-ln">{old_idx + 1}</td>'
+                        f'<td class="diff-code-sbs diff-del">{left}</td>'
+                        f'<td class="diff-ln diff-add-ln">{new_idx + 1}</td>'
+                        f'<td class="diff-code-sbs diff-add">{right}</td></tr>'
+                    )
+                elif old_idx < i2:
+                    left = escape(old_lines[old_idx])
+                    rows.append(
+                        f'<tr>'
+                        f'<td class="diff-ln diff-del-ln">{old_idx + 1}</td>'
+                        f'<td class="diff-code-sbs diff-del">{left}</td>'
+                        f'<td class="diff-ln"></td>'
+                        f'<td class="diff-code-sbs diff-empty"></td></tr>'
+                    )
+                else:
+                    right = escape(new_lines[new_idx])
+                    rows.append(
+                        f'<tr>'
+                        f'<td class="diff-ln"></td>'
+                        f'<td class="diff-code-sbs diff-empty"></td>'
+                        f'<td class="diff-ln diff-add-ln">{new_idx + 1}</td>'
+                        f'<td class="diff-code-sbs diff-add">{right}</td></tr>'
+                    )
+        elif tag == "delete":
+            for i in range(i1, i2):
+                left = escape(old_lines[i])
+                rows.append(
+                    f'<tr>'
+                    f'<td class="diff-ln diff-del-ln">{i + 1}</td>'
+                    f'<td class="diff-code-sbs diff-del">{left}</td>'
+                    f'<td class="diff-ln"></td>'
+                    f'<td class="diff-code-sbs diff-empty"></td></tr>'
+                )
+        elif tag == "insert":
+            for j in range(j1, j2):
+                right = escape(new_lines[j])
+                rows.append(
+                    f'<tr>'
+                    f'<td class="diff-ln"></td>'
+                    f'<td class="diff-code-sbs diff-empty"></td>'
+                    f'<td class="diff-ln diff-add-ln">{j + 1}</td>'
+                    f'<td class="diff-code-sbs diff-add">{right}</td></tr>'
+                )
+
+    if not rows:
+        return '<p class="no-activity">No differences found.</p>'
+
+    return (
+        '<table class="diff-table diff-sbs-table"><tbody>'
+        + "\n".join(rows)
+        + "</tbody></table>"
+    )
+
+
+def get_diff_between_versions(
+    document_id: int, from_version: int, to_version: int, side_by_side: bool = False
+) -> str | None:
     """Get an HTML diff between two version numbers."""
     v_from = DocumentVersion.get_by_version_number(document_id, from_version)
     v_to = DocumentVersion.get_by_version_number(document_id, to_version)
     if not v_from or not v_to:
         return None
+    if side_by_side:
+        return compute_side_by_side_diff(v_from.content, v_to.content)
     return compute_html_diff(v_from.content, v_to.content)
 
 

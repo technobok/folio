@@ -13,7 +13,28 @@
     </hgroup>
 </header>
 
+<div class="diff-form">
+    <label style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.9rem; cursor:pointer;">
+        <input type="checkbox" id="sbs-toggle" {{ 'checked' if side_by_side }}>
+        Side by side
+    </label>
+</div>
+
 <div class="diff-view">
     {{ diff_html }}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('sbs-toggle').addEventListener('change', function() {
+    var url = new URL(window.location);
+    if (this.checked) {
+        url.searchParams.set('sbs', '1');
+    } else {
+        url.searchParams.delete('sbs');
+    }
+    window.location = url;
+});
+</script>
 {% endblock %}
