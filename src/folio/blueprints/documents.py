@@ -1,5 +1,6 @@
 """Documents blueprint - CRUD, view, edit, history, diff, attachments."""
 
+import hashlib
 import io
 import re
 
@@ -17,8 +18,10 @@ from flask import (
 from markupsafe import Markup
 
 from folio.blueprints.auth import get_username, login_required
+from folio.db import transaction
 from folio.models.document import Document
 from folio.models.document_version import DocumentVersion
+from folio.models.file_blob import FileBlob
 from folio.models.tag import Tag
 from folio.services import blob_service, search_service, version_service
 
@@ -49,8 +52,9 @@ def _get_doc_or_404(slug: str) -> Document:
 @login_required
 def index(prefix: str = ""):
     """List documents and virtual folders under a prefix."""
-    documents = Document.list_all(prefix=prefix)
-    folders = Document.list_folders(prefix=prefix)
+    show_hidden = request.args.get("show_hidden") == "1"
+    documents = Document.list_all(prefix=prefix, include_hidden=show_hidden)
+    folders = Document.list_folders(prefix=prefix, include_hidden=show_hidden)
 
     # Filter documents to only show those directly in this folder
     if prefix:
@@ -73,6 +77,7 @@ def index(prefix: str = ""):
         folders=folders,
         prefix=prefix,
         breadcrumbs=breadcrumbs,
+        show_hidden=show_hidden,
     )
 
 
@@ -120,6 +125,58 @@ def new():
         return redirect(url_for("documents.view", slug=doc.slug))
 
     return render_template("documents/new.html", parent_path=parent_path)
+
+
+@bp.route("/upload-file", methods=["GET", "POST"])
+@login_required
+def upload_file():
+    """Upload a standalone binary document (PDF, image, etc.)."""
+    parent_path = request.args.get("parent", "")
+
+    if request.method == "POST":
+        file = request.files.get("file")
+        if not file or not file.filename:
+            flash("No file selected.", "error")
+            return render_template("documents/upload_file.html", parent_path=parent_path)
+
+        max_size = current_app.config.get("MAX_UPLOAD_SIZE", 50 * 1024 * 1024)
+        content = file.read()
+        if len(content) > max_size:
+            flash("File too large.", "error")
+            return render_template("documents/upload_file.html", parent_path=parent_path)
+        file.seek(0)
+
+        filename = file.filename
+        mime_type = file.content_type or "application/octet-stream"
+        username = get_username()
+
+        slug = Document.generate_slug(filename, parent_path)
+        doc = Document.create(
+            title=filename,
+            created_by=username,
+            content=None,
+            mime_type=mime_type,
+            slug=slug,
+        )
+
+        # Save blob and link
+        sha256_hash = hashlib.sha256(content).hexdigest()
+        blob, created = FileBlob.get_or_create(sha256_hash, len(content), mime_type)
+        if created:
+            blob_path = blob_service.get_blob_path(sha256_hash)
+            blob_path.parent.mkdir(parents=True, exist_ok=True)
+            blob_path.write_bytes(content)
+
+        with transaction() as cursor:
+            cursor.execute(
+                "INSERT INTO document_blob (document_id, blob_id) VALUES (?, ?)",
+                (doc.id, blob.id),
+            )
+
+        flash("File uploaded.", "success")
+        return redirect(url_for("documents.view", slug=doc.slug))
+
+    return render_template("documents/upload_file.html", parent_path=parent_path)
 
 
 # ---------------------------------------------------------------------------

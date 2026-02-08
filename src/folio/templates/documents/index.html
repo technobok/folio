@@ -16,7 +16,15 @@
             </p>
             {% endif %}
         </hgroup>
-        <button type="button" onclick="location.href='{{ url_for('documents.new', parent=prefix) }}'">New Document</button>
+        <div class="doc-toolbar">
+            <button type="button" onclick="location.href='{{ url_for('documents.new', parent=prefix) }}'">New Document</button>
+            <button type="button" onclick="location.href='{{ url_for('documents.upload_file', parent=prefix) }}'" class="outline">Upload File</button>
+            {% if show_hidden %}
+            <button type="button" onclick="location.href='{{ url_for('documents.index', prefix=prefix) }}'" class="outline secondary">Hide Hidden</button>
+            {% else %}
+            <button type="button" onclick="location.href='{{ url_for('documents.index', prefix=prefix, show_hidden='1') }}'" class="outline secondary">Show Hidden</button>
+            {% endif %}
+        </div>
     </header>
 
     {% if folders %}
