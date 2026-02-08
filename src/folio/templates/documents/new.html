@@ -38,7 +38,7 @@
 <script>
 const vditor = new Vditor('vditor', {
     height: 400,
-    mode: 'wysiwyg',
+    mode: 'ir',
     lang: 'en_US',
     placeholder: 'Start writing...',
     theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'classic',
@@ -51,8 +51,15 @@ const vditor = new Vditor('vditor', {
         'undo', 'redo', '|',
         'edit-mode', 'outline', 'fullscreen',
     ],
+    preview: {
+        actions: [],
+    },
     after: function() {
-        // Sync theme
+        vditor.vditor.options.outline.enable = true;
+        vditor.vditor.options.outline.position = 'right';
+        var outlineBtn = document.querySelector('.vditor-toolbar [data-type="outline"]');
+        if (outlineBtn) { outlineBtn.click(); }
+
         var modeCheckbox = document.getElementById('mode-checkbox');
         if (modeCheckbox) {
             modeCheckbox.addEventListener('change', function() {

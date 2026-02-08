@@ -58,7 +58,7 @@ var initialContent = {{ document.current_content | tojson }};
 
 var vditor = new Vditor('vditor', {
     height: 500,
-    mode: 'wysiwyg',
+    mode: 'ir',
     lang: 'en_US',
     value: initialContent || '',
     theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'classic',
@@ -71,6 +71,9 @@ var vditor = new Vditor('vditor', {
         'undo', 'redo', '|',
         'edit-mode', 'outline', 'fullscreen',
     ],
+    preview: {
+        actions: [],
+    },
     upload: {
         url: '{{ url_for("documents.upload_attachment", slug=document.slug) }}',
         headers: {'X-Requested-With': 'XMLHttpRequest'},
@@ -79,6 +82,11 @@ var vditor = new Vditor('vditor', {
         accept: 'image/*',
     },
     after: function() {
+        vditor.vditor.options.outline.enable = true;
+        vditor.vditor.options.outline.position = 'right';
+        var outlineBtn = document.querySelector('.vditor-toolbar [data-type="outline"]');
+        if (outlineBtn) { outlineBtn.click(); }
+
         var modeCheckbox = document.getElementById('mode-checkbox');
         if (modeCheckbox) {
             modeCheckbox.addEventListener('change', function() {
