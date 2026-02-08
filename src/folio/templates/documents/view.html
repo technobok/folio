@@ -213,7 +213,7 @@ function initTagsTomSelect() {
                 return '<div><span class="tag-badge" style="background-color:' + escape(data.color) + '">' + escape(data.name) + '</span></div>';
             },
             item: function(data, escape) {
-                return '<div><span class="tag-badge" style="background-color:' + escape(data.color) + '">' + escape(data.name) + '</span></div>';
+                return '<div class="tag-badge" style="background-color:' + escape(data.color) + '">' + escape(data.name) + '</div>';
             }
         },
         onItemAdd: function(value) {
