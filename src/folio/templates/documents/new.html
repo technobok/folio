@@ -2,10 +2,6 @@
 
 {% block title %}New Document - Folio{% endblock %}
 
-{% block head %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor/dist/index.css" />
-{% endblock %}
-
 {% block content %}
 <h2>New Document</h2>
 
@@ -22,55 +18,9 @@
         {% endif %}
     </details>
 
-    <input type="hidden" name="content" id="content-field" value="">
-    <label>Content</label>
-    <div id="vditor"></div>
-
     <div class="form-actions">
         <button type="submit">Create Document</button>
         <button type="button" onclick="location.href='{{ url_for('documents.index') }}'" class="outline secondary">Cancel</button>
     </div>
 </form>
-{% endblock %}
-
-{% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/vditor/dist/index.min.js"></script>
-<script>
-const vditor = new Vditor('vditor', {
-    height: 400,
-    mode: 'ir',
-    lang: 'en_US',
-    placeholder: 'Start writing...',
-    theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'classic',
-    cache: { enable: false },
-    toolbar: [
-        'headings', 'bold', 'italic', 'strike', '|',
-        'list', 'ordered-list', 'check', '|',
-        'quote', 'code', 'inline-code', '|',
-        'link', 'table', '|',
-        'undo', 'redo', '|',
-        'edit-mode', 'outline', 'fullscreen',
-    ],
-    preview: {
-        actions: [],
-    },
-    after: function() {
-        vditor.vditor.options.outline.enable = true;
-        vditor.vditor.options.outline.position = 'right';
-        var outlineBtn = document.querySelector('.vditor-toolbar [data-type="outline"]');
-        if (outlineBtn) { outlineBtn.click(); }
-
-        var modeCheckbox = document.getElementById('mode-checkbox');
-        if (modeCheckbox) {
-            modeCheckbox.addEventListener('change', function() {
-                vditor.setTheme(this.checked ? 'dark' : 'classic');
-            });
-        }
-    },
-});
-
-document.getElementById('document-form').addEventListener('submit', function() {
-    document.getElementById('content-field').value = vditor.getValue();
-});
-</script>
 {% endblock %}

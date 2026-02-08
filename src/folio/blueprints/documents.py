@@ -100,13 +100,12 @@ def new():
 
         raw_slug = request.form.get("slug", "").strip()
         slug = folio_slugify(raw_slug) if raw_slug else None
-        content = request.form.get("content", "")
         username = get_username()
 
         doc = Document.create(
             title=title,
             created_by=username,
-            content=content,
+            content="",
             slug=slug,
             parent_path=parent_path,
         )
@@ -114,16 +113,16 @@ def new():
         # Create initial version
         DocumentVersion.create(
             document_id=doc.id,
-            content=content,
+            content="",
             author=username,
             message="Initial version",
         )
 
         # Index for search
-        search_service.index_document(doc.id, doc.title, content)
+        search_service.index_document(doc.id, doc.title, "")
 
-        flash("Document created.", "success")
-        return redirect(url_for("documents.view", slug=doc.slug))
+        flash("Document created. You can now edit it below.", "success")
+        return redirect(url_for("documents.edit", slug=doc.slug))
 
     return render_template("documents/new.html", parent_path=parent_path)
 
