@@ -14,6 +14,33 @@
     <button type="button" onclick="location.href='{{ url_for('documents.new') }}'" class="outline">New Document</button>
     <button type="button" onclick="location.href='{{ url_for('documents.search') }}'" class="secondary outline">Search</button>
 </div>
+
+{% if recent_docs %}
+<section class="recent-changes">
+    <h3>Recent Changes</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Document</th>
+                <th>Type</th>
+                <th>Updated</th>
+                <th>Author</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc in recent_docs %}
+            <tr>
+                <td><a href="{{ url_for('documents.view', slug=doc.slug) }}">{{ doc.title }}</a></td>
+                <td><span class="type-indicator">{{ 'MD' if doc.is_markdown else 'File' }}</span></td>
+                <td>{{ doc.updated_at | localdatetime }}</td>
+                <td>{{ doc.created_by }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
 {% else %}
 <p>Please <a href="{{ url_for('auth.login') }}">log in</a> to access documents.</p>
 {% endif %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Authors - {{ document.title }} - Folio{% endblock %}
+
+{% block content %}
+<nav class="breadcrumbs">
+    <a href="{{ url_for('documents.index') }}">Documents</a>
+    {% for label, slug_prefix in document.breadcrumbs[:-1] %}
+    / <a href="{{ url_for('documents.index', prefix=slug_prefix) }}">{{ label }}</a>
+    {% endfor %}
+    / <a href="{{ url_for('documents.view', slug=document.slug) }}">{{ document.title }}</a>
+    / Authors
+</nav>
+
+<header>
+    <hgroup>
+        <h2>Authors: {{ document.title }}</h2>
+        <p>Line-level authorship attribution</p>
+    </hgroup>
+</header>
+
+<div class="doc-toolbar">
+    <button type="button" onclick="location.href='{{ url_for('documents.view', slug=document.slug) }}'" class="outline secondary">Back to Document</button>
+    <button type="button" onclick="location.href='{{ url_for('documents.history', slug=document.slug) }}'" class="outline secondary">History</button>
+</div>
+
+{% if author_lines %}
+<div style="overflow-x: auto;">
+    <table class="authors-table">
+        <tbody>
+            {% for line in author_lines %}
+            <tr>
+                <td class="line-num">{{ line.line_number }}</td>
+                <td class="line-version">v{{ line.version_number }}</td>
+                <td class="line-author">{{ line.author }}</td>
+                <td>{{ line.content }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="no-activity">No content to display.</p>
+{% endif %}
+{% endblock %}

@@ -1,5 +1,6 @@
 """Tag model."""
 
+import random
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -100,6 +101,26 @@ class Tag:
                 "DELETE FROM document_tag WHERE document_id = ? AND tag_id = ?",
                 (document_id, tag_id),
             )
+
+    def is_light(self) -> bool:
+        return self.color in LIGHT_TAG_COLORS
+
+    @staticmethod
+    def get_or_create(name: str) -> Tag:
+        existing = Tag.get_by_name(name)
+        if existing:
+            return existing
+        color = random.choice(TAG_COLORS)
+        return Tag.create(name=name, color=color)
+
+    @staticmethod
+    def search(query: str) -> list[Tag]:
+        db = get_db()
+        rows = db.execute(
+            f"SELECT {Tag._COLUMNS} FROM tag WHERE name LIKE ? ORDER BY name LIMIT 20",
+            (f"%{query}%",),
+        ).fetchall()
+        return [Tag._from_row(row) for row in rows]
 
     def delete(self) -> None:
         with transaction() as cursor:

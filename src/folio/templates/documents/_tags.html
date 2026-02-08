@@ -1,0 +1,18 @@
+<div id="tags-section">
+    <select id="tags-select" multiple placeholder="Add tags..."></select>
+    <script type="application/json" id="tags-data">
+    {
+        "documentSlug": {{ document.slug | tojson }},
+        "currentTags": [
+            {% for tag in tags %}{% if not loop.first %},{% endif %}
+            {"id": {{ tag.id }}, "name": {{ tag.name | tojson }}, "color": {{ tag.color | tojson }}}
+            {% endfor %}
+        ],
+        "allTags": [
+            {% for tag in all_tags %}{% if not loop.first %},{% endif %}
+            {"id": {{ tag.id }}, "name": {{ tag.name | tojson }}, "color": {{ tag.color | tojson }}}
+            {% endfor %}
+        ]
+    }
+    </script>
+</div>

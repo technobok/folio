@@ -157,7 +157,14 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
 
     @app.route("/")
     def index():
-        return render_template("index.html")
+        from flask import g
+
+        recent_docs = []
+        if g.get("user"):
+            from folio.models.document import Document
+
+            recent_docs = Document.list_recent(limit=20)
+        return render_template("index.html", recent_docs=recent_docs)
 
     return app
 

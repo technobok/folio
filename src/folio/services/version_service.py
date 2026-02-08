@@ -1,8 +1,18 @@
 """Version management service - diffs and history."""
 
 import difflib
+from dataclasses import dataclass
 
 from folio.models.document_version import DocumentVersion
+
+
+@dataclass
+class AuthorLine:
+    line_number: int
+    content: str
+    author: str
+    version_number: int
+    created_at: str
 
 
 def compute_diff(old_content: str, new_content: str, context: int = 3) -> str:
@@ -64,3 +74,60 @@ def save_version(
         doc.update(current_content=content)
 
     return version
+
+
+def compute_authors(document_id: int) -> list[AuthorLine]:
+    """Compute per-line authorship by walking backward through versions.
+
+    For each line in the current content, determines which version (and author)
+    last modified it. Compares current content against each progressively older
+    version — lines that differ from the older version are attributed to the
+    newer version, unless already attributed.
+    """
+    versions = DocumentVersion.list_for_document(document_id)
+    if not versions:
+        return []
+
+    # Versions come newest-first
+    current = versions[0]
+    current_lines = current.content.splitlines()
+
+    if not current_lines:
+        return []
+
+    n = len(current_lines)
+    attribution: list[tuple[str, int, str] | None] = [None] * n
+
+    if len(versions) == 1:
+        return [
+            AuthorLine(i + 1, line, current.author, current.version_number, current.created_at)
+            for i, line in enumerate(current_lines)
+        ]
+
+    # Walk from newest version backward, comparing current against each older version
+    for idx in range(len(versions) - 1):
+        newer = versions[idx]
+        older = versions[idx + 1]
+        older_lines = older.content.splitlines()
+
+        matcher = difflib.SequenceMatcher(None, older_lines, current_lines)
+        for tag, _i1, _i2, j1, j2 in matcher.get_opcodes():
+            if tag in ("replace", "insert"):
+                for j in range(j1, j2):
+                    if attribution[j] is None:
+                        attribution[j] = (newer.author, newer.version_number, newer.created_at)
+
+        if all(a is not None for a in attribution):
+            break
+
+    # Remaining unattributed lines belong to the oldest version
+    oldest = versions[-1]
+    for i in range(n):
+        if attribution[i] is None:
+            attribution[i] = (oldest.author, oldest.version_number, oldest.created_at)
+
+    return [
+        AuthorLine(i + 1, line, attr[0], attr[1], attr[2])
+        for i, (line, attr) in enumerate(zip(current_lines, attribution))
+        if attr is not None
+    ]

@@ -34,6 +34,9 @@ REGISTRY: list[ConfigEntry] = [
     ConfigEntry("uploads.max_size_mb", ConfigType.INT, 50, "Maximum upload size in MB"),
     # -- blobs --
     ConfigEntry("blobs.directory", ConfigType.STRING, "instance/blobs", "Blob storage directory"),
+    # -- outbox --
+    ConfigEntry("outbox.db_path", ConfigType.STRING, "", "Path to Outbox SQLite database"),
+    ConfigEntry("outbox.mail_sender", ConfigType.STRING, "", "Sender email address for notifications"),
     # -- proxy --
     ConfigEntry("proxy.x_forwarded_for", ConfigType.INT, 0, "Trust X-Forwarded-For (hop count)"),
     ConfigEntry(
@@ -81,6 +84,8 @@ KEY_MAP: dict[str, str] = {
     "gatekeeper.api_key": "GATEKEEPER_API_KEY",
     "uploads.max_size_mb": "MAX_UPLOAD_SIZE_MB",
     "blobs.directory": "BLOBS_DIRECTORY",
+    "outbox.db_path": "OUTBOX_DB_PATH",
+    "outbox.mail_sender": "OUTBOX_MAIL_SENDER",
     "proxy.x_forwarded_for": "PROXY_X_FORWARDED_FOR",
     "proxy.x_forwarded_proto": "PROXY_X_FORWARDED_PROTO",
     "proxy.x_forwarded_host": "PROXY_X_FORWARDED_HOST",

@@ -616,6 +616,82 @@ footer small {
     border-radius: var(--pico-border-radius);
 }
 
+/* ---- Tags tom-select ---- */
+
+#tags-section {
+    margin-bottom: 1rem;
+}
+
+#tags-section .ts-control {
+    border: 1px solid var(--pico-muted-border-color);
+    background: var(--pico-card-background-color);
+    min-height: 2rem;
+}
+
+#tags-section .ts-dropdown {
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+}
+
+#tags-section .ts-dropdown .active {
+    background: var(--pico-primary-focus);
+}
+
+.document-view.reader-mode #tags-section {
+    display: none;
+}
+
+/* ---- Authors view ---- */
+
+.authors-table {
+    font-family: monospace;
+    font-size: 0.85rem;
+    width: 100%;
+}
+
+.authors-table td {
+    padding: 0.15rem 0.5rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    vertical-align: top;
+}
+
+.authors-table .line-num {
+    color: var(--pico-muted-color);
+    text-align: right;
+    user-select: none;
+    width: 3rem;
+}
+
+.authors-table .line-author {
+    font-size: 0.8rem;
+    width: 10rem;
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.authors-table .line-version {
+    color: var(--pico-muted-color);
+    text-align: center;
+    width: 3rem;
+}
+
+/* ---- Recent changes ---- */
+
+.recent-changes {
+    margin-top: 1.5rem;
+}
+
+.recent-changes table {
+    font-size: 0.9rem;
+}
+
+.recent-changes .type-indicator {
+    font-size: 0.75rem;
+    color: var(--pico-muted-color);
+}
+
 /* Responsive: collapse TOC on small screens */
 @media (max-width: 768px) {
     .document-layout.has-toc {

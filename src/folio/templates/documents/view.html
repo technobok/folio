@@ -3,6 +3,7 @@
 {% block title %}{{ document.title }} - Folio{% endblock %}
 
 {% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/tom-select.min.css') }}">
 {% if document.is_markdown %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.25.0/tocbot.css">
 {% endif %}
@@ -47,6 +48,18 @@
         <button type="button" onclick="location.href='{{ url_for('documents.raw', slug=document.slug) }}'" class="outline">Download</button>
         {% endif %}
         <button type="button" onclick="location.href='{{ url_for('documents.history', slug=document.slug) }}'" class="outline secondary">History</button>
+        {% if document.is_markdown %}
+        <button type="button" onclick="location.href='{{ url_for('documents.authors', slug=document.slug) }}'" class="outline secondary">Authors</button>
+        {% endif %}
+        {% if is_watching %}
+        <form method="post" action="{{ url_for('documents.unwatch', slug=document.slug) }}" style="display:inline">
+            <button type="submit" class="outline secondary">Unwatch</button>
+        </form>
+        {% else %}
+        <form method="post" action="{{ url_for('documents.watch', slug=document.slug) }}" style="display:inline">
+            <button type="submit" class="outline secondary">Watch</button>
+        </form>
+        {% endif %}
         <form method="post" action="{{ url_for('documents.delete', slug=document.slug) }}" style="display:inline"
               onsubmit="return confirm('Delete this document?');">
             <button type="submit" class="outline secondary">Delete</button>
@@ -54,13 +67,7 @@
     </div>
 
     <!-- Tags -->
-    {% if tags %}
-    <div class="tag-list">
-        {% for tag in tags %}
-        <span class="tag-badge" style="background-color: {{ tag.color }}">{{ tag.name }}</span>
-        {% endfor %}
-    </div>
-    {% endif %}
+    {% include "documents/_tags.html" %}
 
     <!-- Document layout with TOC -->
     <div class="document-layout{% if document.is_markdown %} has-toc{% endif %}">
@@ -115,6 +122,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='vendor/tom-select.min.js') }}"></script>
 {% if document.is_markdown %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.25.0/tocbot.min.js"></script>
 {% endif %}
@@ -156,5 +164,88 @@
         }
     }
 })();
+
+// Tom-Select tags initialization
+function initTagsTomSelect() {
+    var selectEl = document.getElementById('tags-select');
+    if (!selectEl || selectEl.tomselect) return;
+
+    var dataEl = document.getElementById('tags-data');
+    if (!dataEl) return;
+
+    var config;
+    try {
+        config = JSON.parse(dataEl.textContent);
+    } catch (e) {
+        console.error('Failed to parse tags data:', e);
+        return;
+    }
+
+    var slug = config.documentSlug;
+    var searchUrl = '{{ url_for("documents.tag_search", slug="__SLUG__") }}'.replace('__SLUG__', slug);
+    var addUrl = '{{ url_for("documents.tag_add", slug="__SLUG__") }}'.replace('__SLUG__', slug);
+    var removeUrlBase = '{{ url_for("documents.tag_remove", slug="__SLUG__", tag_id=0) }}'.replace('__SLUG__', slug).replace('/0/remove', '');
+
+    new TomSelect(selectEl, {
+        valueField: 'id',
+        labelField: 'name',
+        searchField: ['name'],
+        options: config.allTags,
+        items: config.currentTags.map(function(t) { return t.id; }),
+        create: function(input, callback) {
+            var form = new FormData();
+            form.append('tag_name', input);
+            fetch(addUrl, {
+                method: 'POST',
+                headers: { 'HX-Request': 'true' },
+                body: form
+            }).then(function(resp) { return resp.text(); })
+            .then(function(html) {
+                var section = document.getElementById('tags-section');
+                if (section) section.outerHTML = html;
+                setTimeout(initTagsTomSelect, 50);
+            });
+            return;
+        },
+        render: {
+            option: function(data, escape) {
+                return '<div><span class="tag-badge" style="background-color:' + escape(data.color) + '">' + escape(data.name) + '</span></div>';
+            },
+            item: function(data, escape) {
+                return '<div><span class="tag-badge" style="background-color:' + escape(data.color) + '">' + escape(data.name) + '</span></div>';
+            }
+        },
+        onItemAdd: function(value) {
+            var form = new FormData();
+            form.append('tag_id', value);
+            fetch(addUrl, {
+                method: 'POST',
+                headers: { 'HX-Request': 'true' },
+                body: form
+            }).then(function(resp) { return resp.text(); })
+            .then(function(html) {
+                var section = document.getElementById('tags-section');
+                if (section) section.outerHTML = html;
+                setTimeout(initTagsTomSelect, 50);
+            });
+        },
+        onItemRemove: function(value) {
+            var removeUrl = removeUrlBase + '/' + value + '/remove';
+            fetch(removeUrl, {
+                method: 'POST',
+                headers: { 'HX-Request': 'true' }
+            }).then(function(resp) { return resp.text(); })
+            .then(function(html) {
+                var section = document.getElementById('tags-section');
+                if (section) section.outerHTML = html;
+                setTimeout(initTagsTomSelect, 50);
+            });
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initTagsTomSelect, 50);
+});
 </script>
 {% endblock %}

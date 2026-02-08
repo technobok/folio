@@ -224,6 +224,18 @@ class Document:
                 folders.add(folder)
         return sorted(folders)
 
+    @staticmethod
+    def list_recent(limit: int = 20) -> list[Document]:
+        """Return the most recently updated non-hidden documents."""
+        db = get_db()
+        rows = db.execute(
+            f"SELECT {Document._COLUMNS} FROM document "
+            "WHERE slug NOT LIKE '%/.%' "
+            "ORDER BY updated_at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [Document._from_row(row) for row in rows]
+
     @property
     def is_markdown(self) -> bool:
         return self.mime_type == "text/markdown"

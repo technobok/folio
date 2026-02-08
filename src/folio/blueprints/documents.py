@@ -8,6 +8,7 @@ from flask import (
     abort,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -20,6 +21,7 @@ from folio.blueprints.auth import get_username, login_required
 from folio.db import transaction
 from folio.models.document import Document, folio_slugify
 from folio.models.document_version import DocumentVersion
+from folio.models.document_watcher import DocumentWatcher
 from folio.models.file_blob import FileBlob
 from folio.models.tag import Tag
 from folio.services import blob_service, extraction_service, search_service, version_service
@@ -120,6 +122,9 @@ def new():
         # Index for search
         search_service.index_document(doc.id, doc.title, "")
 
+        # Auto-watch creator
+        DocumentWatcher.watch(doc.id, username)
+
         flash("Document created. You can now edit it below.", "success")
         return redirect(url_for("documents.edit", slug=doc.slug))
 
@@ -173,6 +178,7 @@ def upload_file():
                 message="Uploaded file",
             )
             search_service.index_document(doc.id, doc.title, text)
+            DocumentWatcher.watch(doc.id, username)
             flash("Markdown document created from file.", "success")
             return redirect(url_for("documents.view", slug=doc.slug))
 
@@ -200,6 +206,7 @@ def upload_file():
             )
 
         search_service.index_document(doc.id, doc.title, extracted_text)
+        DocumentWatcher.watch(doc.id, username)
         flash("File uploaded.", "success")
         return redirect(url_for("documents.view", slug=doc.slug))
 
@@ -241,7 +248,9 @@ def view(slug: str):
     blob = doc.get_blob()
     version_count = DocumentVersion.count_for_document(doc.id)
     tags = Tag.get_for_document(doc.id)
+    all_tags = Tag.get_all()
     attachments = Document.list_attachments(doc.slug)
+    is_watching = DocumentWatcher.is_watching(doc.id, get_username())
 
     return render_template(
         "documents/view.html",
@@ -249,7 +258,9 @@ def view(slug: str):
         blob=blob,
         version_count=version_count,
         tags=tags,
+        all_tags=all_tags,
         attachments=attachments,
+        is_watching=is_watching,
     )
 
 
@@ -289,6 +300,9 @@ def edit(slug: str):
 
         if title_changed or content_changed:
             search_service.index_document(doc.id, doc.title, content)
+            from folio.services import notification_service
+
+            notification_service.notify_watchers(doc.id, username, doc.title, doc.slug)
             flash("Document saved.", "success")
         else:
             flash("No changes detected.", "info")
@@ -361,6 +375,23 @@ def diff(slug: str):
     )
 
 
+@bp.route("/authors/<path:slug>")
+@login_required
+def authors(slug: str):
+    """Show per-line authorship for a markdown document."""
+    doc = _get_doc_or_404(slug)
+    if not doc.is_markdown:
+        flash("Authors view is only available for markdown documents.", "error")
+        return redirect(url_for("documents.view", slug=slug))
+
+    author_lines = version_service.compute_authors(doc.id)
+    return render_template(
+        "documents/authors.html",
+        document=doc,
+        author_lines=author_lines,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Delete document
 # ---------------------------------------------------------------------------
@@ -371,6 +402,14 @@ def diff(slug: str):
 def delete(slug: str):
     """Delete a document and its attachment children."""
     doc = _get_doc_or_404(slug)
+    username = get_username()
+
+    # Notify watchers before deletion
+    from folio.services import notification_service
+
+    notification_service.notify_watchers(
+        doc.id, username, doc.title, doc.slug, subject_prefix="[Deleted] "
+    )
 
     # Delete attachment children first (no FK cascade from child slug to parent)
     for att_doc in Document.list_attachments(doc.slug):
@@ -380,6 +419,107 @@ def delete(slug: str):
     doc.delete()
     flash("Document deleted.", "success")
     return redirect(url_for("documents.index"))
+
+
+# ---------------------------------------------------------------------------
+# Tags
+# ---------------------------------------------------------------------------
+
+
+@bp.route("/tags/<path:slug>/search")
+@login_required
+def tag_search(slug: str):
+    """JSON endpoint for tom-select tag search."""
+    doc = _get_doc_or_404(slug)
+    q = request.args.get("q", "").strip()
+    if not q:
+        return jsonify([])
+
+    existing_ids = {t.id for t in Tag.get_for_document(doc.id)}
+    results = Tag.search(q)
+    filtered = [t for t in results if t.id not in existing_ids]
+
+    return jsonify([{"id": t.id, "name": t.name, "color": t.color} for t in filtered])
+
+
+@bp.route("/tags/<path:slug>", methods=["POST"])
+@login_required
+def tag_add(slug: str):
+    """Add a tag to a document. Accepts tag_id or tag_name for new tags."""
+    doc = _get_doc_or_404(slug)
+
+    tag_id = request.form.get("tag_id", type=int)
+    tag_name = request.form.get("tag_name", "").strip()
+
+    if tag_id:
+        tag = Tag.get_by_id(tag_id)
+    elif tag_name:
+        tag = Tag.get_or_create(tag_name)
+    else:
+        if is_htmx_request():
+            return "", 400
+        flash("No tag specified.", "error")
+        return redirect(url_for("documents.view", slug=slug))
+
+    if tag:
+        Tag.add_to_document(doc.id, tag.id)
+        _reindex_tags(doc)
+
+    if is_htmx_request():
+        tags = Tag.get_for_document(doc.id)
+        all_tags = Tag.get_all()
+        return render_template("documents/_tags.html", document=doc, tags=tags, all_tags=all_tags)
+
+    return redirect(url_for("documents.view", slug=slug))
+
+
+@bp.route("/tags/<path:slug>/<int:tag_id>/remove", methods=["POST"])
+@login_required
+def tag_remove(slug: str, tag_id: int):
+    """Remove a tag from a document."""
+    doc = _get_doc_or_404(slug)
+    Tag.remove_from_document(doc.id, tag_id)
+    _reindex_tags(doc)
+
+    if is_htmx_request():
+        tags = Tag.get_for_document(doc.id)
+        all_tags = Tag.get_all()
+        return render_template("documents/_tags.html", document=doc, tags=tags, all_tags=all_tags)
+
+    return redirect(url_for("documents.view", slug=slug))
+
+
+def _reindex_tags(doc: Document) -> None:
+    """Re-index a document's FTS entry with updated tags."""
+    tags = Tag.get_for_document(doc.id)
+    tags_text = " ".join(t.name for t in tags)
+    content = doc.current_content or ""
+    search_service.index_document(doc.id, doc.title, content, tags_text)
+
+
+# ---------------------------------------------------------------------------
+# Watching
+# ---------------------------------------------------------------------------
+
+
+@bp.route("/watch/<path:slug>", methods=["POST"])
+@login_required
+def watch(slug: str):
+    """Watch a document."""
+    doc = _get_doc_or_404(slug)
+    DocumentWatcher.watch(doc.id, get_username())
+    flash("You are now watching this document.", "success")
+    return redirect(url_for("documents.view", slug=slug))
+
+
+@bp.route("/unwatch/<path:slug>", methods=["POST"])
+@login_required
+def unwatch(slug: str):
+    """Unwatch a document."""
+    doc = _get_doc_or_404(slug)
+    DocumentWatcher.unwatch(doc.id, get_username())
+    flash("You are no longer watching this document.", "success")
+    return redirect(url_for("documents.view", slug=slug))
 
 
 # ---------------------------------------------------------------------------
