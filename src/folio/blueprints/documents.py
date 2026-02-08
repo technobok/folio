@@ -200,6 +200,7 @@ def upload_file():
                 (doc.id, blob.id),
             )
 
+        search_service.index_document(doc.id, doc.title, "")
         flash("File uploaded.", "success")
         return redirect(url_for("documents.view", slug=doc.slug))
 
@@ -238,12 +239,7 @@ def view(slug: str):
     """View a document — info page for all types."""
     doc = _get_doc_or_404(slug)
 
-    # Attachment slugs (/.att/) redirect to raw for backward compat with
-    # embedded image URLs in markdown content.
     blob = doc.get_blob()
-    if blob and "/.att/" in slug:
-        return redirect(url_for("documents.raw", slug=slug))
-
     version_count = DocumentVersion.count_for_document(doc.id)
     tags = Tag.get_for_document(doc.id)
     attachments = Document.list_attachments(doc.slug)
