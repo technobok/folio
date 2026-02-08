@@ -193,10 +193,11 @@ def rebuild_index_command():
 
 @main.command("migrate-schema")
 def migrate_schema_command():
-    """Migrate database schema to latest version (currently v3).
+    """Migrate database schema to latest version (currently v4).
 
-    Recreates the FTS index as a regular (non-contentless) table.
-    After migrating, run `folio-admin rebuild-index` to populate it.
+    Applies migrations incrementally:
+    - v2→v3: Recreates FTS index as a regular table
+    - v3→v4: Adds file_size column to document table
     """
     app = _make_app()
     with app.app_context():
@@ -206,26 +207,37 @@ def migrate_schema_command():
         row = db.execute(
             "SELECT value FROM db_metadata WHERE key = 'schema_version'"
         ).fetchone()
-        version = str(row[0]) if row else "1"
+        version = int(str(row[0]) if row else "1")
 
-        if int(version) >= 3:
+        if version >= 4:
             click.echo(f"Schema already at version {version}, nothing to do.")
             return
 
-        click.echo(f"Migrating schema from version {version} to 3...")
+        if version < 3:
+            click.echo(f"Migrating schema from version {version} to 3...")
 
-        # v2 → v3: switch FTS from contentless to regular
-        db.execute("DROP TABLE IF EXISTS document_fts")
-        db.execute(
-            "CREATE VIRTUAL TABLE document_fts USING fts5("
-            "title, content_text, tags_text, tokenize='porter unicode61')"
-        )
-        db.execute(
-            "INSERT OR REPLACE INTO db_metadata (key, value) VALUES ('schema_version', '3')"
-        )
+            # v2 → v3: switch FTS from contentless to regular
+            db.execute("DROP TABLE IF EXISTS document_fts")
+            db.execute(
+                "CREATE VIRTUAL TABLE document_fts USING fts5("
+                "title, content_text, tags_text, tokenize='porter unicode61')"
+            )
+            db.execute(
+                "INSERT OR REPLACE INTO db_metadata (key, value) VALUES ('schema_version', '3')"
+            )
 
-        click.echo("Schema migrated to version 3.")
-        click.echo("Run `folio-admin rebuild-index` to populate the search index.")
+            click.echo("Schema migrated to version 3.")
+            click.echo("Run `folio-admin rebuild-index` to populate the search index.")
+            version = 3
+
+        if version < 4:
+            click.echo("Migrating schema from version 3 to 4...")
+
+            from folio.services import migration_service
+
+            migration_service.migrate_add_file_size()
+
+            click.echo("Schema migrated to version 4 (added file_size to document).")
 
 
 @main.command("migrate-attachments")

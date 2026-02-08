@@ -217,7 +217,7 @@ def save_version(
 
     doc = Document.get_by_id(document_id)
     if doc:
-        doc.update(current_content=content)
+        doc.update(current_content=content, file_size=len(content))
 
     return version
 

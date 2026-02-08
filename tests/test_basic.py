@@ -62,13 +62,16 @@ def test_document_crud(app):
         from folio.models.document import Document
         from folio.models.document_version import DocumentVersion
 
+        content = "# Test\n\nHello."
         doc = Document.create(
             title="Test Doc",
             created_by="tester",
-            content="# Test\n\nHello.",
+            content=content,
+            file_size=len(content),
         )
         assert doc.id > 0
         assert doc.slug == "test-doc"
+        assert doc.file_size == len(content)
 
         # Version
         v = DocumentVersion.create(

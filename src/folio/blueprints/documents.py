@@ -18,7 +18,7 @@ from flask import (
 from markupsafe import Markup
 
 from folio.blueprints.auth import get_username, login_required
-from folio.db import transaction
+from folio.db import get_db, transaction
 from folio.models.document import Document, folio_slugify
 from folio.models.document_version import DocumentVersion
 from folio.models.document_watcher import DocumentWatcher
@@ -170,6 +170,7 @@ def upload_file():
                 content=text,
                 mime_type="text/markdown",
                 slug=slug,
+                file_size=len(text),
             )
             DocumentVersion.create(
                 document_id=doc.id,
@@ -190,6 +191,7 @@ def upload_file():
             content=extracted_text or None,
             mime_type=mime_type,
             slug=slug,
+            file_size=len(content),
         )
 
         sha256_hash = hashlib.sha256(content).hexdigest()
@@ -579,8 +581,6 @@ def upload_attachment(slug: str):
 @login_required
 def serve_attachment(attachment_id: int):
     """Backward-compat redirect for old attachment URLs."""
-    from folio.db import get_db
-
     db = get_db()
     # Look up the old attachment row to find its parent doc and filename,
     # then redirect to the new document-based URL.

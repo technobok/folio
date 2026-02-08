@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS db_metadata (
     value TEXT NOT NULL
 );
 
-INSERT OR IGNORE INTO db_metadata (key, value) VALUES ('schema_version', '3');
+INSERT OR IGNORE INTO db_metadata (key, value) VALUES ('schema_version', '4');
 
 -- Application settings
 CREATE TABLE IF NOT EXISTS app_setting (
@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS document (
     title TEXT NOT NULL,
     mime_type TEXT NOT NULL DEFAULT 'text/markdown',
     current_content TEXT,
+    file_size INTEGER NOT NULL DEFAULT 0,
     created_by TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     created_at TEXT NOT NULL

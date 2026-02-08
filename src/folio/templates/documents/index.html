@@ -45,6 +45,7 @@
             <tr>
                 <th>Title</th>
                 <th>Type</th>
+                <th>Size</th>
                 <th>Updated</th>
                 <th>Author</th>
             </tr>
@@ -60,6 +61,7 @@
                     <span class="type-badge type-binary">{{ doc.mime_type.split('/')[-1][:6] }}</span>
                     {% endif %}
                 </td>
+                <td>{{ doc.file_size | filesize }}</td>
                 <td>{{ doc.updated_at | localdate }}</td>
                 <td>{{ doc.created_by }}</td>
             </tr>

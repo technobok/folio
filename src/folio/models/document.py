@@ -52,6 +52,7 @@ class Document:
     title: str
     mime_type: str
     current_content: str | None
+    file_size: int
     created_by: str
     updated_at: str
     created_at: str
@@ -64,12 +65,13 @@ class Document:
             title=str(row[2]),
             mime_type=str(row[3]),
             current_content=row[4] if row[4] is not None else None,
-            created_by=str(row[5]),
-            updated_at=str(row[6]),
-            created_at=str(row[7]),
+            file_size=int(row[5]),
+            created_by=str(row[6]),
+            updated_at=str(row[7]),
+            created_at=str(row[8]),
         )
 
-    _COLUMNS = "id, slug, title, mime_type, current_content, created_by, updated_at, created_at"
+    _COLUMNS = "id, slug, title, mime_type, current_content, file_size, created_by, updated_at, created_at"
 
     @staticmethod
     def get_by_id(doc_id: int) -> Document | None:
@@ -113,6 +115,7 @@ class Document:
         mime_type: str = "text/markdown",
         slug: str | None = None,
         parent_path: str = "",
+        file_size: int = 0,
     ) -> Document:
         now = datetime.now(UTC).isoformat()
         if not slug:
@@ -120,9 +123,9 @@ class Document:
 
         with transaction() as cursor:
             cursor.execute(
-                "INSERT INTO document (slug, title, mime_type, current_content, "
-                "created_by, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (slug, title, mime_type, content, created_by, now, now),
+                "INSERT INTO document (slug, title, mime_type, current_content, file_size, "
+                "created_by, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (slug, title, mime_type, content, file_size, created_by, now, now),
             )
             row = cursor.execute("SELECT last_insert_rowid()").fetchone()
             doc_id = int(row[0]) if row else 0
@@ -133,6 +136,7 @@ class Document:
             title=title,
             mime_type=mime_type,
             current_content=content,
+            file_size=file_size,
             created_by=created_by,
             updated_at=now,
             created_at=now,
@@ -143,7 +147,7 @@ class Document:
         updates = []
         params: list[Any] = []
 
-        for field in ("title", "slug", "current_content", "mime_type"):
+        for field in ("title", "slug", "current_content", "mime_type", "file_size"):
             if field in kwargs:
                 updates.append(f"{field} = ?")
                 params.append(kwargs[field])

@@ -32,8 +32,9 @@
                 {% if version_count > 0 %}
                 &middot; {{ version_count }} version{{ 's' if version_count != 1 }}
                 {% endif %}
+                &middot; {{ document.file_size | filesize }}
                 {% if blob %}
-                &middot; {{ blob.mime_type }} &middot; {{ blob.file_size | filesize }}
+                &middot; {{ blob.mime_type }}
                 {% endif %}
             </p>
         </hgroup>

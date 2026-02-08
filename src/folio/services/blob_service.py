@@ -74,7 +74,7 @@ def save_uploaded_file(
                 "INSERT INTO document_blob (document_id, blob_id) VALUES (?, ?)",
                 (existing.id, blob.id),
             )
-        existing.update(mime_type=mime_type)
+        existing.update(mime_type=mime_type, file_size=file_size)
         return existing
 
     # Create a new attachment document
@@ -85,6 +85,7 @@ def save_uploaded_file(
         content=None,
         mime_type=mime_type,
         slug=slug,
+        file_size=file_size,
     )
 
     with transaction() as cursor:

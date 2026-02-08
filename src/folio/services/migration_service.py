@@ -111,6 +111,40 @@ def migrate_attachments() -> int:
     return len(rows)
 
 
+def migrate_add_file_size() -> None:
+    """Add file_size column to document table and backfill values.
+
+    Bumps schema_version from 3 to 4.
+    """
+    db = get_db()
+
+    with transaction() as cursor:
+        cursor.execute(
+            "ALTER TABLE document ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0"
+        )
+
+        # Backfill markdown documents from current_content length
+        cursor.execute(
+            "UPDATE document SET file_size = LENGTH(current_content) "
+            "WHERE mime_type = 'text/markdown' AND current_content IS NOT NULL"
+        )
+
+        # Backfill binary documents from file_blob.file_size
+        cursor.execute(
+            "UPDATE document SET file_size = ("
+            "  SELECT fb.file_size FROM document_blob db "
+            "  JOIN file_blob fb ON fb.id = db.blob_id "
+            "  WHERE db.document_id = document.id"
+            ") WHERE id IN (SELECT document_id FROM document_blob)"
+        )
+
+        cursor.execute(
+            "INSERT OR REPLACE INTO db_metadata (key, value) VALUES ('schema_version', '4')"
+        )
+
+    log.info("migrated schema to v4: added file_size column to document")
+
+
 def _rewrite_urls(cursor, url_map: dict[int, str]) -> None:
     """Rewrite /documents/attachment/{id} URLs in document content and versions."""
     for att_id, new_slug in url_map.items():
