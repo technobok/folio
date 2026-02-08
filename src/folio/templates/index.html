@@ -10,9 +10,9 @@
 
 {% if g.user %}
 <div class="grid">
-    <a href="{{ url_for('documents.index') }}" role="button">Browse Documents</a>
-    <a href="{{ url_for('documents.new') }}" role="button" class="outline">New Document</a>
-    <a href="{{ url_for('documents.search') }}" role="button" class="secondary outline">Search</a>
+    <button type="button" onclick="location.href='{{ url_for('documents.index') }}'">Browse Documents</button>
+    <button type="button" onclick="location.href='{{ url_for('documents.new') }}'" class="outline">New Document</button>
+    <button type="button" onclick="location.href='{{ url_for('documents.search') }}'" class="secondary outline">Search</button>
 </div>
 {% else %}
 <p>Please <a href="{{ url_for('auth.login') }}">log in</a> to access documents.</p>

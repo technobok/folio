@@ -16,7 +16,7 @@
             </p>
             {% endif %}
         </hgroup>
-        <a href="{{ url_for('documents.new', parent=prefix) }}" role="button">New Document</a>
+        <button type="button" onclick="location.href='{{ url_for('documents.new', parent=prefix) }}'">New Document</button>
     </header>
 
     {% if folders %}

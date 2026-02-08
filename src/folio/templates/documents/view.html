@@ -29,9 +29,9 @@
     <!-- Toolbar -->
     <div class="doc-toolbar">
         {% if document.is_markdown %}
-        <a href="{{ url_for('documents.edit', slug=document.slug) }}" role="button" class="outline">Edit</a>
+        <button type="button" onclick="location.href='{{ url_for('documents.edit', slug=document.slug) }}'" class="outline">Edit</button>
         {% endif %}
-        <a href="{{ url_for('documents.history', slug=document.slug) }}" role="button" class="outline secondary">History</a>
+        <button type="button" onclick="location.href='{{ url_for('documents.history', slug=document.slug) }}'" class="outline secondary">History</button>
         <form method="post" action="{{ url_for('documents.delete', slug=document.slug) }}" style="display:inline"
               onsubmit="return confirm('Delete this document?');">
             <button type="submit" class="outline secondary">Delete</button>

@@ -24,7 +24,7 @@
 
     <div class="form-actions">
         <button type="submit">Save</button>
-        <a href="{{ url_for('documents.view', slug=document.slug) }}" role="button" class="outline secondary">Cancel</a>
+        <button type="button" onclick="location.href='{{ url_for('documents.view', slug=document.slug) }}'" class="outline secondary">Cancel</button>
     </div>
 </form>
 

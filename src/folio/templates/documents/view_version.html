@@ -14,8 +14,8 @@
 </header>
 
 <div class="doc-toolbar">
-    <a href="{{ url_for('documents.view', slug=document.slug) }}" role="button" class="outline">Current version</a>
-    <a href="{{ url_for('documents.history', slug=document.slug) }}" role="button" class="outline secondary">History</a>
+    <button type="button" onclick="location.href='{{ url_for('documents.view', slug=document.slug) }}'" class="outline">Current version</button>
+    <button type="button" onclick="location.href='{{ url_for('documents.history', slug=document.slug) }}'" class="outline secondary">History</button>
 </div>
 
 <article class="document-content">

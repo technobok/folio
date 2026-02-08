@@ -28,7 +28,7 @@
 
     <div class="form-actions">
         <button type="submit">Create Document</button>
-        <a href="{{ url_for('documents.index') }}" role="button" class="outline secondary">Cancel</a>
+        <button type="button" onclick="location.href='{{ url_for('documents.index') }}'" class="outline secondary">Cancel</button>
     </div>
 </form>
 {% endblock %}
