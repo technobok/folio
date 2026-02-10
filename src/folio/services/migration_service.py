@@ -116,12 +116,10 @@ def migrate_add_file_size() -> None:
 
     Bumps schema_version from 3 to 4.
     """
-    db = get_db()
+    get_db()
 
     with transaction() as cursor:
-        cursor.execute(
-            "ALTER TABLE document ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0"
-        )
+        cursor.execute("ALTER TABLE document ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0")
 
         # Backfill markdown documents from current_content length
         cursor.execute(

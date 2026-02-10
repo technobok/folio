@@ -125,9 +125,9 @@ class DocumentVersion:
         ).fetchall()
         return [
             {
-                "version_id": int(row[0]),
-                "document_id": int(row[1]),
-                "version_number": int(row[2]),
+                "version_id": int(row[0]) if row[0] is not None else 0,
+                "document_id": int(row[1]) if row[1] is not None else 0,
+                "version_number": int(row[2]) if row[2] is not None else 0,
                 "author": str(row[3]),
                 "message": row[4] if row[4] is not None else None,
                 "created_at": str(row[5]),

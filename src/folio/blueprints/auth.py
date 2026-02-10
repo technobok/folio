@@ -1,6 +1,8 @@
 """Authentication blueprint using Gatekeeper client."""
 
 import functools
+from collections.abc import Callable
+from typing import Any
 
 from flask import (
     Blueprint,
@@ -12,6 +14,7 @@ from flask import (
     request,
     url_for,
 )
+from werkzeug.wrappers import Response
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -29,14 +32,14 @@ def load_logged_in_user() -> None:
         g.user = None
 
 
-def login_required(view):
+def login_required(view: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator that redirects anonymous users to the login page."""
 
     @functools.wraps(view)
-    def wrapped_view(**kwargs):
+    def wrapped_view(*args: Any, **kwargs: Any) -> Any:
         if g.get("user") is None:
             return redirect(url_for("auth.login", next=request.url))
-        return view(**kwargs)
+        return view(*args, **kwargs)
 
     return wrapped_view
 
@@ -58,7 +61,7 @@ def get_display_name() -> str:
 
 
 @bp.route("/login", methods=["GET", "POST"])
-def login():
+def login() -> str | Response:
     """Login page - redirect to Gatekeeper or show configuration needed."""
     if g.get("user"):
         return redirect(url_for("index"))
@@ -89,7 +92,7 @@ def login():
 
 
 @bp.route("/verify")
-def verify():
+def verify() -> Response:
     """Verify magic link token from Gatekeeper."""
     gk = current_app.config.get("GATEKEEPER_CLIENT")
     if not gk:
@@ -124,7 +127,7 @@ def verify():
 
 
 @bp.route("/logout")
-def logout():
+def logout() -> Response:
     """Log out the current user."""
     cookie_name = "gk_session"
     response = redirect(url_for("index"))

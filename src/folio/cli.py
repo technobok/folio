@@ -204,9 +204,7 @@ def migrate_schema_command():
         from folio.db import get_db
 
         db = get_db()
-        row = db.execute(
-            "SELECT value FROM db_metadata WHERE key = 'schema_version'"
-        ).fetchone()
+        row = db.execute("SELECT value FROM db_metadata WHERE key = 'schema_version'").fetchone()
         version = int(str(row[0]) if row else "1")
 
         if version >= 4:

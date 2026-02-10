@@ -16,6 +16,7 @@ from flask import (
     url_for,
 )
 from markupsafe import Markup
+from werkzeug.wrappers import Response
 
 from folio.blueprints.auth import get_username, login_required
 from folio.db import get_db, transaction
@@ -51,7 +52,7 @@ def _get_doc_or_404(slug: str) -> Document:
 @bp.route("/browse/")
 @bp.route("/browse/<path:prefix>")
 @login_required
-def index(prefix: str = ""):
+def index(prefix: str = "") -> str:
     """List documents and virtual folders under a prefix."""
     show_hidden = request.args.get("show_hidden") == "1"
     documents = Document.list_all(prefix=prefix, include_hidden=show_hidden)
@@ -89,7 +90,7 @@ def index(prefix: str = ""):
 
 @bp.route("/activity")
 @login_required
-def activity():
+def activity() -> str:
     """Recent changes feed across all documents."""
     entries = DocumentVersion.list_recent_activity(limit=50)
     return render_template("documents/activity.html", entries=entries)
@@ -102,7 +103,7 @@ def activity():
 
 @bp.route("/new", methods=["GET", "POST"])
 @login_required
-def new():
+def new() -> str | Response:
     """Create a new markdown document."""
     parent_path = request.args.get("parent", "")
 
@@ -146,7 +147,7 @@ def new():
 
 @bp.route("/upload-file", methods=["GET", "POST"])
 @login_required
-def upload_file():
+def upload_file() -> str | Response:
     """Upload a file as a standalone document."""
     parent_path = request.args.get("parent", "")
 
@@ -235,7 +236,7 @@ def upload_file():
 
 @bp.route("/raw/<path:slug>")
 @login_required
-def raw(slug: str):
+def raw(slug: str) -> Response:
     """Serve raw binary content for a document."""
     doc = _get_doc_or_404(slug)
     blob = doc.get_blob()
@@ -256,7 +257,7 @@ def raw(slug: str):
 
 @bp.route("/view/<path:slug>")
 @login_required
-def view(slug: str):
+def view(slug: str) -> str:
     """View a document — info page for all types."""
     doc = _get_doc_or_404(slug)
 
@@ -286,7 +287,7 @@ def view(slug: str):
 
 @bp.route("/edit/<path:slug>", methods=["GET", "POST"])
 @login_required
-def edit(slug: str):
+def edit(slug: str) -> str | Response:
     """Edit a markdown document."""
     doc = _get_doc_or_404(slug)
     if not doc.is_markdown:
@@ -335,7 +336,7 @@ def edit(slug: str):
 
 @bp.route("/history/<path:slug>")
 @login_required
-def history(slug: str):
+def history(slug: str) -> str:
     """View version history of a document."""
     doc = _get_doc_or_404(slug)
     versions = DocumentVersion.list_for_document(doc.id)
@@ -348,7 +349,7 @@ def history(slug: str):
 
 @bp.route("/version/<path:slug>/<int:version_number>")
 @login_required
-def view_version(slug: str, version_number: int):
+def view_version(slug: str, version_number: int) -> str:
     """View a specific version of a document."""
     doc = _get_doc_or_404(slug)
     version = DocumentVersion.get_by_version_number(doc.id, version_number)
@@ -365,7 +366,7 @@ def view_version(slug: str, version_number: int):
 
 @bp.route("/diff/<path:slug>")
 @login_required
-def diff(slug: str):
+def diff(slug: str) -> str | Response:
     """Show diff between two versions."""
     doc = _get_doc_or_404(slug)
 
@@ -396,7 +397,7 @@ def diff(slug: str):
 
 @bp.route("/authors/<path:slug>")
 @login_required
-def authors(slug: str):
+def authors(slug: str) -> str | Response:
     """Show per-line authorship for a markdown document."""
     doc = _get_doc_or_404(slug)
     if not doc.is_markdown:
@@ -418,7 +419,7 @@ def authors(slug: str):
 
 @bp.route("/delete/<path:slug>", methods=["POST"])
 @login_required
-def delete(slug: str):
+def delete(slug: str) -> Response:
     """Delete a document and its attachment children."""
     doc = _get_doc_or_404(slug)
     username = get_username()
@@ -447,7 +448,7 @@ def delete(slug: str):
 
 @bp.route("/tags/<path:slug>/search")
 @login_required
-def tag_search(slug: str):
+def tag_search(slug: str) -> Response:
     """JSON endpoint for tom-select tag search."""
     doc = _get_doc_or_404(slug)
     q = request.args.get("q", "").strip()
@@ -463,7 +464,7 @@ def tag_search(slug: str):
 
 @bp.route("/tags/<path:slug>", methods=["POST"])
 @login_required
-def tag_add(slug: str):
+def tag_add(slug: str) -> str | tuple[str, int] | Response:
     """Add a tag to a document. Accepts tag_id or tag_name for new tags."""
     doc = _get_doc_or_404(slug)
 
@@ -494,7 +495,7 @@ def tag_add(slug: str):
 
 @bp.route("/tags/<path:slug>/<int:tag_id>/remove", methods=["POST"])
 @login_required
-def tag_remove(slug: str, tag_id: int):
+def tag_remove(slug: str, tag_id: int) -> str | Response:
     """Remove a tag from a document."""
     doc = _get_doc_or_404(slug)
     Tag.remove_from_document(doc.id, tag_id)
@@ -523,7 +524,7 @@ def _reindex_tags(doc: Document) -> None:
 
 @bp.route("/watch/<path:slug>", methods=["POST"])
 @login_required
-def watch(slug: str):
+def watch(slug: str) -> Response:
     """Watch a document."""
     doc = _get_doc_or_404(slug)
     DocumentWatcher.watch(doc.id, get_username())
@@ -533,7 +534,7 @@ def watch(slug: str):
 
 @bp.route("/unwatch/<path:slug>", methods=["POST"])
 @login_required
-def unwatch(slug: str):
+def unwatch(slug: str) -> Response:
     """Unwatch a document."""
     doc = _get_doc_or_404(slug)
     DocumentWatcher.unwatch(doc.id, get_username())
@@ -548,7 +549,7 @@ def unwatch(slug: str):
 
 @bp.route("/upload/<path:slug>", methods=["POST"])
 @login_required
-def upload_attachment(slug: str):
+def upload_attachment(slug: str) -> dict | tuple[str, int] | Response:
     """Upload an attachment to a document."""
     doc = _get_doc_or_404(slug)
 
@@ -592,7 +593,7 @@ def upload_attachment(slug: str):
 
 @bp.route("/attachment/<int:attachment_id>")
 @login_required
-def serve_attachment(attachment_id: int):
+def serve_attachment(attachment_id: int) -> Response:
     """Backward-compat redirect for old attachment URLs."""
     db = get_db()
     # Look up the old attachment row to find its parent doc and filename,
@@ -619,7 +620,7 @@ def serve_attachment(attachment_id: int):
 
 @bp.route("/search")
 @login_required
-def search():
+def search() -> str:
     """Search documents."""
     query = request.args.get("q", "").strip()
     mime_type = request.args.get("type", "").strip() or None

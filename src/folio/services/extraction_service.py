@@ -75,11 +75,11 @@ def _extract_email(content_bytes: bytes) -> str:
         for part in msg.walk():
             if part.get_content_type() == "text/plain":
                 payload = part.get_payload(decode=True)
-                if payload:
+                if isinstance(payload, bytes):
                     parts.append(payload.decode("utf-8", errors="replace"))
     else:
         payload = msg.get_payload(decode=True)
-        if payload:
+        if isinstance(payload, bytes):
             parts.append(payload.decode("utf-8", errors="replace"))
 
     return "\n".join(parts)

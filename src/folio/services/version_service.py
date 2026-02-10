@@ -95,11 +95,7 @@ def compute_html_diff(old_content: str, new_content: str, context: int = 3) -> s
     if not rows:
         return '<p class="no-activity">No differences found.</p>'
 
-    return (
-        '<table class="diff-table"><tbody>'
-        + "\n".join(rows)
-        + "</tbody></table>"
-    )
+    return '<table class="diff-table"><tbody>' + "\n".join(rows) + "</tbody></table>"
 
 
 def compute_side_by_side_diff(old_content: str, new_content: str) -> str:
@@ -112,7 +108,7 @@ def compute_side_by_side_diff(old_content: str, new_content: str) -> str:
 
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == "equal":
-            for i, j in zip(range(i1, i2), range(j1, j2)):
+            for i, j in zip(range(i1, i2), range(j1, j2), strict=True):
                 left = escape(old_lines[i])
                 right = escape(new_lines[j])
                 rows.append(
@@ -131,7 +127,7 @@ def compute_side_by_side_diff(old_content: str, new_content: str) -> str:
                     left = escape(old_lines[old_idx])
                     right = escape(new_lines[new_idx])
                     rows.append(
-                        f'<tr>'
+                        f"<tr>"
                         f'<td class="diff-ln diff-del-ln">{old_idx + 1}</td>'
                         f'<td class="diff-code-sbs diff-del">{left}</td>'
                         f'<td class="diff-ln diff-add-ln">{new_idx + 1}</td>'
@@ -140,7 +136,7 @@ def compute_side_by_side_diff(old_content: str, new_content: str) -> str:
                 elif old_idx < i2:
                     left = escape(old_lines[old_idx])
                     rows.append(
-                        f'<tr>'
+                        f"<tr>"
                         f'<td class="diff-ln diff-del-ln">{old_idx + 1}</td>'
                         f'<td class="diff-code-sbs diff-del">{left}</td>'
                         f'<td class="diff-ln"></td>'
@@ -149,7 +145,7 @@ def compute_side_by_side_diff(old_content: str, new_content: str) -> str:
                 else:
                     right = escape(new_lines[new_idx])
                     rows.append(
-                        f'<tr>'
+                        f"<tr>"
                         f'<td class="diff-ln"></td>'
                         f'<td class="diff-code-sbs diff-empty"></td>'
                         f'<td class="diff-ln diff-add-ln">{new_idx + 1}</td>'
@@ -159,7 +155,7 @@ def compute_side_by_side_diff(old_content: str, new_content: str) -> str:
             for i in range(i1, i2):
                 left = escape(old_lines[i])
                 rows.append(
-                    f'<tr>'
+                    f"<tr>"
                     f'<td class="diff-ln diff-del-ln">{i + 1}</td>'
                     f'<td class="diff-code-sbs diff-del">{left}</td>'
                     f'<td class="diff-ln"></td>'
@@ -169,7 +165,7 @@ def compute_side_by_side_diff(old_content: str, new_content: str) -> str:
             for j in range(j1, j2):
                 right = escape(new_lines[j])
                 rows.append(
-                    f'<tr>'
+                    f"<tr>"
                     f'<td class="diff-ln"></td>'
                     f'<td class="diff-code-sbs diff-empty"></td>'
                     f'<td class="diff-ln diff-add-ln">{j + 1}</td>'
@@ -179,11 +175,7 @@ def compute_side_by_side_diff(old_content: str, new_content: str) -> str:
     if not rows:
         return '<p class="no-activity">No differences found.</p>'
 
-    return (
-        '<table class="diff-table diff-sbs-table"><tbody>'
-        + "\n".join(rows)
-        + "</tbody></table>"
-    )
+    return '<table class="diff-table diff-sbs-table"><tbody>' + "\n".join(rows) + "</tbody></table>"
 
 
 def get_diff_between_versions(
@@ -274,6 +266,6 @@ def compute_authors(document_id: int) -> list[AuthorLine]:
 
     return [
         AuthorLine(i + 1, line, attr[0], attr[1], attr[2])
-        for i, (line, attr) in enumerate(zip(current_lines, attribution))
+        for i, (line, attr) in enumerate(zip(current_lines, attribution, strict=True))
         if attr is not None
     ]

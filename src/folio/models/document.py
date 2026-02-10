@@ -71,7 +71,9 @@ class Document:
             created_at=str(row[8]),
         )
 
-    _COLUMNS = "id, slug, title, mime_type, current_content, file_size, created_by, updated_at, created_at"
+    _COLUMNS = (
+        "id, slug, title, mime_type, current_content, file_size, created_by, updated_at, created_at"
+    )
 
     @staticmethod
     def get_by_id(doc_id: int) -> Document | None:

@@ -36,7 +36,9 @@ REGISTRY: list[ConfigEntry] = [
     ConfigEntry("blobs.directory", ConfigType.STRING, "instance/blobs", "Blob storage directory"),
     # -- outbox --
     ConfigEntry("outbox.db_path", ConfigType.STRING, "", "Path to Outbox SQLite database"),
-    ConfigEntry("outbox.mail_sender", ConfigType.STRING, "", "Sender email address for notifications"),
+    ConfigEntry(
+        "outbox.mail_sender", ConfigType.STRING, "", "Sender email address for notifications"
+    ),
     # -- proxy --
     ConfigEntry("proxy.x_forwarded_for", ConfigType.INT, 0, "Trust X-Forwarded-For (hop count)"),
     ConfigEntry(
