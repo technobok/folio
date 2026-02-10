@@ -1,4 +1,4 @@
-"""Authentication blueprint using Gatekeeper client."""
+"""Authentication blueprint using Gatekeeper SSO."""
 
 import functools
 from collections.abc import Callable
@@ -60,34 +60,27 @@ def get_display_name() -> str:
     return user.fullname or user.username
 
 
-@bp.route("/login", methods=["GET", "POST"])
+@bp.route("/login")
 def login() -> str | Response:
-    """Login page - redirect to Gatekeeper or show configuration needed."""
+    """Redirect to Gatekeeper SSO login, or show fallback page."""
     if g.get("user"):
         return redirect(url_for("index"))
 
     gk = current_app.config.get("GATEKEEPER_CLIENT")
     if not gk:
-        return render_template("auth/login.html", gatekeeper_configured=False)
+        return render_template("auth/login.html", login_url=None)
 
-    if request.method == "POST":
-        identifier = request.form.get("identifier", "").strip()
-        if not identifier:
-            flash("Please enter your username or email.", "error")
-            return render_template("auth/login.html", gatekeeper_configured=True)
+    login_url = gk.get_login_url()
+    if not login_url:
+        return render_template("auth/login.html", login_url=None)
 
-        callback_url = url_for("auth.verify", _external=True)
-        next_url = request.form.get("next", "/")
+    next_url = request.args.get("next", "/")
+    callback_url = url_for("auth.verify", _external=True)
 
-        if gk.send_magic_link(identifier, callback_url, redirect_url=next_url, app_name="Folio"):
-            return render_template("auth/login_sent.html", identifier=identifier)
-        else:
-            flash("User not found or email could not be sent.", "error")
-
-    return render_template(
-        "auth/login.html",
-        gatekeeper_configured=True,
-        next=request.args.get("next", "/"),
+    return redirect(
+        f"{login_url}?app_name=Folio"
+        f"&callback_url={callback_url}"
+        f"&next={next_url}"
     )
 
 
@@ -110,11 +103,10 @@ def verify() -> Response:
 
     # Create auth token and set cookie
     auth_token = gk.create_auth_token(user)
-    cookie_name = "gk_session"
 
     response = redirect(redirect_url or url_for("index"))
     response.set_cookie(
-        cookie_name,
+        "gk_session",
         auth_token,
         max_age=86400 * 365,
         httponly=True,
@@ -129,8 +121,7 @@ def verify() -> Response:
 @bp.route("/logout")
 def logout() -> Response:
     """Log out the current user."""
-    cookie_name = "gk_session"
     response = redirect(url_for("index"))
-    response.delete_cookie(cookie_name)
+    response.delete_cookie("gk_session")
     flash("You have been logged out.", "info")
     return response
