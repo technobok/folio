@@ -205,7 +205,7 @@ Folio delegates all user management and authentication to Gatekeeper, a shared a
 - Managing a separate user database
 - Duplicating the magic-link login flow
 
-Folio's auth blueprint sends magic-link requests to Gatekeeper and verifies the returned tokens. User identity comes from the Gatekeeper cookie. If Gatekeeper is not configured, the login page says so rather than failing silently.
+Folio redirects unauthenticated users to Gatekeeper's centralised login page (requires `server.login_url` to be set in Gatekeeper — see the [Gatekeeper README](../gatekeeper/README.md#centralised-sso-login)). Gatekeeper handles the magic-link flow and redirects back to Folio's verify endpoint with a signed token. Session validation uses the local Gatekeeper database — no network calls. If Gatekeeper is not configured, the login page says so rather than failing silently.
 
 ### Access control: deliberately simple
 
