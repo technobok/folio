@@ -27,7 +27,7 @@
                 <li><a href="{{ url_for('admin_sql.index') }}">SQL</a></li>
                 {% endif %}
                 {% if g.user %}
-                <li>{{ g.user.fullname or g.user.username }}</li>
+                <li>{{ g.user.username }}</li>
                 <li><button type="button" class="outline secondary" onclick="location.href='{{ url_for('auth.logout') }}'">Logout</button></li>
                 {% else %}
                 <li><button type="button" onclick="location.href='{{ url_for('auth.login') }}'" class="outline">Login</button></li>
