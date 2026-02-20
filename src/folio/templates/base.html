@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>document.documentElement.setAttribute('data-theme',localStorage.getItem('folio-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'))</script>
     <title>{% block title %}Folio{% endblock %}</title>
 
     <!-- Vendor CSS -->
