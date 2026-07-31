@@ -169,7 +169,7 @@ dependencies = [
     { name = "httpx" },
     { name = "itsdangerous" },
     { name = "openpyxl" },
-    { name = "python-ldap" },
+    { name = "python-ldap", marker = "sys_platform != 'win32'" },
 ]
 
 [package.metadata]
@@ -182,7 +182,7 @@ requires-dist = [
     { name = "itsdangerous", specifier = ">=2.1" },
     { name = "openpyxl", specifier = ">=3.1" },
     { name = "pytest", marker = "extra == 'dev'" },
-    { name = "python-ldap", specifier = ">=3.4" },
+    { name = "python-ldap", marker = "sys_platform != 'win32'", specifier = ">=3.4" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "ty", marker = "extra == 'dev'" },
 ]
