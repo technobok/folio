@@ -7,9 +7,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import apsw
-import markdown
 from flask import Flask, render_template, request
-from markupsafe import Markup
 
 from folio.config import KEY_MAP, REGISTRY, parse_value
 
@@ -104,25 +102,12 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
         except Exception:
             return iso_string[:16].replace("T", " ") if iso_string else ""
 
-    # Markdown renderer for document display
-    md = markdown.Markdown(extensions=["toc", "tables", "fenced_code", "sane_lists"])
+    # Markdown people write (documents): mistune, raw HTML escaped, unsafe links
+    # neutralised, Python-Markdown's heading ids (services/markdown_service).
+    from folio.services import markdown_service
 
-    @app.template_filter("markdown")
-    def markdown_filter(text: str | None) -> Markup:
-        if not text:
-            return Markup("")
-        md.reset()
-        html = md.convert(text).strip()
-        if html.startswith("<p>") and html.endswith("</p>") and html.count("<p>") == 1:
-            html = html[3:-4]
-        return Markup(html)
-
-    @app.template_filter("markdown_block")
-    def markdown_block_filter(text: str | None) -> Markup:
-        if not text:
-            return Markup("")
-        md.reset()
-        return Markup(md.convert(text))
+    app.add_template_filter(markdown_service.render_inline, "markdown")
+    app.add_template_filter(markdown_service.render_block, "markdown_block")
 
     @app.template_filter("filesize")
     def filesize_filter(size_bytes: int) -> str:

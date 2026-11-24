@@ -120,7 +120,7 @@ folio/
   database/
     schema.sql                  # Full schema (11 tables + FTS5 virtual table)
   src/folio/
-    __init__.py                 # App factory (Flask, Python-Markdown, Jinja filters)
+    __init__.py                 # App factory (Flask, Jinja filters)
     db.py                       # APSW connection management + transactions
     config.py                   # Typed configuration registry
     web.py                      # Web server entry point (dev + gunicorn)
@@ -182,7 +182,7 @@ Of the remaining options:
 
 ### Why GitHub Flavoured Markdown
 
-GFM (via Python-Markdown with `toc`, `tables`, `fenced_code`, and `sane_lists` extensions) is what most people expect when they hear "markdown". The `toc` extension auto-generates heading `id` attributes with deduplication, enabling the client-side table of contents (tocbot).
+GFM-style Markdown (tables, fenced code, strikethrough) is what most people expect when they hear "markdown". It is rendered by **mistune 3** (`services/markdown_service.py`), the Markdown library the other projects use, with raw HTML escaped and `javascript:`-style links neutralised: documents are written by people, so a document must never run script in a reader's browser (Python-Markdown, used until 2026-11-24, passes raw HTML through). Headings get the same deduplicated `id` attributes Python-Markdown's `toc` extension gave them (`getting-started`, `getting-started_1`), so section links keep working and the client-side table of contents (tocbot) builds from them. Raw HTML in a document now shows as text.
 
 AsciiDoc was considered and rejected: the Ruby toolchain dependency is operationally painful, and GFM covers the practical use case.
 
